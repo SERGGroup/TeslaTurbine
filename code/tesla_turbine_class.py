@@ -1,15 +1,6 @@
-import numpy as np
+from sub_classes.support import TeslaGeometry, TeslaOptions
 from REFPROPConnector import ThermodynamicPoint as TP
-
-class TeslaGeometry:
-
-    throat_width = 0.0002
-    d_rotor = 2000
-
-class TeslaOptions:
-
-    n_rotor = 250
-    profile_rotor = False
+import numpy as np
 
 class TeslaTurbine:
 
@@ -46,10 +37,9 @@ class TeslaTurbine:
         self.points[0].set_variable("T", 10)
         self.points[0].set_variable("P", 1)
 
-        print(self.geometry.throat_width)
+        print(self.geometry.stator.throat_width)
         print(self.points[0].get_unit("H"))
         print(self.points[0].evaluate_RP_code("D2DDPT"))
-
 
 
 if __name__ == "__main__":
@@ -60,5 +50,5 @@ if __name__ == "__main__":
 
     for throat in range(5):
 
-        curr_geometry.throat_width = throat
+        curr_geometry.stator.throat_width = throat
         tt.stator()

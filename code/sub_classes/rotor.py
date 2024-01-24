@@ -1,12 +1,14 @@
 from code.tesla_turbine_class import TeslaTurbine
 import numpy as np
 
+
 class Rotor:
 
     def __init__(self, main_turbine: TeslaTurbine):
 
         self.main_turbine = main_turbine
-        self.options = self.main_turbine.options
+        self.geometry = self.main_turbine.geometry.rotor
+        self.options = self.main_turbine.options.rotor
 
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
@@ -15,7 +17,7 @@ class Rotor:
 
     def solve(self):
 
-        first_step = RotorStep(self, r_max)
+        first_step = RotorStep(self, self.geometry.d_out)
         new_step = first_step
 
         for i in range(self.options.n_rotor):
@@ -23,7 +25,13 @@ class Rotor:
             if self.options.profile_rotor:
                 self.rotor_points.append(new_step)
 
-            new_step = new_step.update()
+            " TODO "
+            dr = 2
+            new_step = new_step.get_new_step(dr)
+
+        if self.options.profile_rotor:
+            self.rotor_points.append(new_step)
+
     def get_rotor_array(self):
 
         rotor_array = np.empty((self.options.n_rotor, 30))
@@ -82,3 +90,10 @@ class RotorStep:
         self.r = r
         self.main_rotor = main_rotor
         self.thermo_point = self.main_rotor.input_point.duplicate()
+
+    def get_new_step(self, dr):
+
+        new_r = self.r - dr
+        new_step = RotorStep(main_rotor=self.main_rotor, r=new_r)
+
+        return new_step
