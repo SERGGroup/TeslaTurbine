@@ -1,10 +1,10 @@
 class RotorOptions:
 
-    n_rotor = 250
     profile_rotor = False
 
+    n_rotor = 250
     integr_method = "Std"
-    integr_variable = 2
+    integr_variable = 0.001
 
 
 class StatorOptions:

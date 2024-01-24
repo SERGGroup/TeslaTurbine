@@ -4,6 +4,8 @@ import numpy as np
 
 class Rotor:
 
+    dv_perc = 0
+
     def __init__(self, main_turbine: TeslaTurbine):
 
         self.main_turbine = main_turbine
@@ -13,20 +15,33 @@ class Rotor:
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
 
+        self.__omega = 0.
         self.rotor_points = list()
 
     def solve(self):
 
+        self.__omega = self.main_turbine.v_out_stat / ((self.dv_perc + 1) * self.geometry.r_out)
+        self.rotor_points = list()
+
         first_step = RotorStep(self, self.geometry.d_out)
         new_step = first_step
+
+        #
+        # For detailed explanation on rotor discretization check:
+        #
+        #   "code/sub_classes/other/rotor discretization explaination.xlsx"
+        #
+
+        dr_tot = self.geometry.dr_tot
+        b = self.options.integr_variable * dr_tot
+        a = np.power(dr_tot / b + 1, 1 / self.options.n_rotor)
 
         for i in range(self.options.n_rotor):
 
             if self.options.profile_rotor:
                 self.rotor_points.append(new_step)
 
-            " TODO "
-            dr = 2
+            dr = a ** i * (a - 1) * b
             new_step = new_step.get_new_step(dr)
 
         if self.options.profile_rotor:
@@ -40,7 +55,6 @@ class Rotor:
         if self.options.profile_rotor:
 
             for i in range(len(self.rotor_points)):
-
                 curr_rotor = self.rotor_points[i]
 
                 rotor_array[i, 0] = i
@@ -82,18 +96,32 @@ class Rotor:
 
         return rotor_array
 
+    @property
+    def rpm(self):
+
+        return self.__omega / np.pi * 30
+
+    @property
+    def omega(self):
+
+        return self.__omega
+
 
 class RotorStep:
 
     def __init__(self, main_rotor: Rotor, r):
 
-        self.r = r
         self.main_rotor = main_rotor
         self.thermo_point = self.main_rotor.input_point.duplicate()
+
+        self.r = r
+        self.u = self.main_rotor.omega * r
 
     def get_new_step(self, dr):
 
         new_r = self.r - dr
         new_step = RotorStep(main_rotor=self.main_rotor, r=new_r)
+
+
 
         return new_step

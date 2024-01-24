@@ -29,6 +29,11 @@ class RotorGeometry:
     def r_int(self):
         return self.d_out / self.d_ratio / 2
 
+    @property
+    def dr_tot(self):
+
+        return self.r_out - self.r_int
+
 
 class StatorGeometry:
 
