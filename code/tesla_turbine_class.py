@@ -52,3 +52,5 @@ if __name__ == "__main__":
 
         curr_geometry.stator.throat_width = throat
         tt.stator()
+
+    print(tt.geometry.stator.d_int)

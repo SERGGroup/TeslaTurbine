@@ -6,9 +6,11 @@ class RotorOptions:
     integr_method = "Std"
     integr_variable = 2
 
+
 class StatorOptions:
 
-    pass
+    iterate_phi = True
+    n_phi_iteration = 50
 
 
 class TeslaOptions:
