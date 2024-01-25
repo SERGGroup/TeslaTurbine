@@ -91,17 +91,3 @@ class Stator:
             Ma_1, Xi_diff = self.__evaluate_phi(0.9)
 
 
-
-if __name__ == "__main__":
-
-
-
-
-
-
-
-
-
-        
-
-

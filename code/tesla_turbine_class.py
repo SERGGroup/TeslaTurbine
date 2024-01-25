@@ -2,6 +2,7 @@ from sub_classes.support import TeslaGeometry, TeslaOptions
 from REFPROPConnector import ThermodynamicPoint as TP
 import numpy as np
 
+
 class TeslaTurbine:
 
     def __init__(self, fluid, geometry: TeslaGeometry, options: TeslaOptions):
