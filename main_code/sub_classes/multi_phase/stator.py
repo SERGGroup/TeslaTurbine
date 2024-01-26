@@ -1,6 +1,8 @@
 from main_code.tesla_turbine_class import TeslaTurbine
 from REFPROPConnector import ThermodynamicPoint as TP
+from main_code.support import Speed, Position
 import numpy as np
+
 
 class Stator:
 
@@ -174,6 +176,14 @@ class Stator:
         h_01 = self.output_point.get_variable("h")
 
         Eta_stat = (self.output_point.get_variable("h") - self.static_output_point.get_variable("h"))/(self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h"))
+
+        self.speed_out = Speed(Position(self.geometry.r_int, 0))
+        self.speed_out.init_from_codes(
+
+            "v", v1,
+            "alpha", self.geometry.alpha1
+
+        )
 
         return T0, p0, T1, Eta_stat, Ma_1, x0, x1, v1, m_dot_s, h_01, p_01, h1, rho_1l, rho_1g, void_f1
 

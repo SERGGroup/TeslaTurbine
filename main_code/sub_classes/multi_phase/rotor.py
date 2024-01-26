@@ -1,4 +1,5 @@
 from main_code.tesla_turbine_class import TeslaTurbine
+from main_code.support.speed import Speed, Position
 import numpy as np
 
 
@@ -20,10 +21,18 @@ class Rotor:
 
     def solve(self):
 
-        self.__omega = self.main_turbine.v_out_stat / ((self.dv_perc + 1) * self.geometry.r_out)
+        self.__omega = self.main_turbine.stator.speed_out.vt / ((self.dv_perc + 1) * self.geometry.r_out)
         self.rotor_points = list()
 
-        first_step = RotorStep(self, self.geometry.d_out)
+        first_pos = Position(self.geometry.r_out, self.__omega)
+        first_speed = Speed(position=first_pos)
+        first_speed.init_from_codes(
+
+            "v", self.main_turbine.stator.speed_out.v,
+            "alpha", self.main_turbine.geometry.stator.alpha1
+
+        )
+        first_step = RotorStep(self, first_speed)
         new_step = first_step
 
         #
@@ -97,16 +106,19 @@ class Rotor:
         return rotor_array
 
 
-
 class RotorStep:
 
-    def __init__(self, main_rotor: Rotor, r):
+    def __init__(self, main_rotor: Rotor, speed: Speed):
 
         self.main_rotor = main_rotor
         self.thermo_point = self.main_rotor.input_point.duplicate()
 
-        self.r = r
-        self.u = self.main_rotor.omega * r
+        self.speed = speed
+
+    @property
+    def pos(self):
+
+        return self.speed.pos
 
     def get_new_step(self, dr):
 

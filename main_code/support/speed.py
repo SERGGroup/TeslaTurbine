@@ -1,33 +1,5 @@
+from .position import Position
 import numpy as np
-
-
-class Position:
-
-    def __init__(self, r, omega, theta=0, gamma=0, t=0):
-
-        self.t = t
-
-        self.r = r
-        self.theta = theta
-        self.gamma = gamma
-
-        self.__omega = omega
-
-    @property
-    def rpm(self):
-
-        return self.__omega / np.pi * 30
-
-    @property
-    def omega(self):
-
-        return self.__omega
-
-    @property
-    def u(self):
-
-        return self.__omega * self.r
-
 
 class Speed:
 
@@ -153,6 +125,11 @@ class Speed:
     def beta(self):
 
         return self.__beta
+
+    @property
+    def has_been_set(self):
+
+        return self.__w is not None
 
     def __check_code_correct(self, code):
 

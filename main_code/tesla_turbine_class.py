@@ -1,5 +1,6 @@
 from sub_classes.support import TeslaGeometry, TeslaOptions
 from REFPROPConnector import ThermodynamicPoint as TP
+from sub_classes.multi_phase import Stator, Rotor
 import numpy as np
 
 
@@ -11,8 +12,10 @@ class TeslaTurbine:
         self.geometry = geometry
         self.options = options
 
+        self.stator = Stator(self)
+        self.rotor = Rotor(self)
+
         self.__init_states(4)
-        self.__init_profilers()
 
     def __init_states(self, n_points):
 
@@ -25,22 +28,9 @@ class TeslaTurbine:
             self.points.append(base_point.duplicate())
             self.static_points.append(base_point.duplicate())
 
-    def __init_profilers(self):
-
-        self.rotor_profiler = np.array([])
-
     def iterate_pressure(self):
 
         pass
-
-    def stator(self):
-
-        self.points[0].set_variable("T", 10)
-        self.points[0].set_variable("P", 1)
-
-        print(self.geometry.stator.throat_width)
-        print(self.points[0].get_unit("H"))
-        print(self.points[0].evaluate_RP_code("D2DDPT"))
 
 
 if __name__ == "__main__":

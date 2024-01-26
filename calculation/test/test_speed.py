@@ -1,5 +1,5 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
-from main_code.support.speed_calculator import Position, Speed
+from main_code.support.speed import Position, Speed
 import numpy as np
 
 # %%------------   DEFINE TEST PARAM                      -----------------------------------------------------------> #
