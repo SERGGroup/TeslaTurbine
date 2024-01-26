@@ -3,11 +3,14 @@ import numpy as np
 
 class Position:
 
-    def __init__(self, r, theta, gamma, omega):
+    def __init__(self, r, omega, theta=0, gamma=0, t=0):
+
+        self.t = t
 
         self.r = r
         self.theta = theta
         self.gamma = gamma
+
         self.__omega = omega
 
     @property
@@ -101,11 +104,15 @@ class Speed:
 
     def get_new_position(self, dr):
 
-        new_r = self.pos.r + self.__vr * dt
+        new_r = self.pos.r - dr
+
+        dt = dr / self.__vr
+
+        new_t = self.pos.t + dt
         new_theta = self.pos.theta + self.__vt / self.pos.r * dt
         new_gamma = self.pos.gamma + self.__wt / self.pos.r * dt
 
-        return Position(new_r, new_theta, new_gamma, self.pos.omega)
+        return Position(new_r, self.pos.omega, new_theta, new_gamma, new_t)
 
     @property
     def v(self):
