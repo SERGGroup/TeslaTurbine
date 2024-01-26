@@ -39,6 +39,11 @@ class StatorGeometry:
 
     d_ratio = 1.5
     throat_width = 0.0002
+    Z_stat = 4
+    H_s = 0.0005
+    alpha1 = 85
+    N_s = 50
+
 
     def __init__(self, main_geom):
 
@@ -56,6 +61,7 @@ class StatorGeometry:
     def r_int(self):
         return self.d_int / 2
 
+    chord = 0.75 * r_int
 
 class TeslaGeometry:
 

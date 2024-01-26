@@ -13,6 +13,7 @@ class StatorOptions:
     n_phi_iteration = 50
 
 
+
 class TeslaOptions:
 
     rotor = RotorOptions()
