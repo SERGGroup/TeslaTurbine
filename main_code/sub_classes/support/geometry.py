@@ -44,7 +44,6 @@ class StatorGeometry:
     alpha1 = 85
     N_s = 50
 
-
     def __init__(self, main_geom):
 
         self.main_class = main_geom
@@ -62,6 +61,7 @@ class StatorGeometry:
         return self.d_int / 2
 
     chord = 0.75 * r_int
+
 
 class TeslaGeometry:
 

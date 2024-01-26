@@ -25,6 +25,7 @@ class Position:
 
         return self.__omega * self.r
 
+
 class Speed:
 
     __possible_codes = ["v", "v_t", "v_r", "w", "w_t", "w_r", "alpha", "beta"]
@@ -98,7 +99,7 @@ class Speed:
             self.__evaluate(first_code, first_value, second_code, second_value)
             self.__evaluate_other()
 
-    def get_new_position(self, dt):
+    def get_new_position(self, dr):
 
         new_r = self.pos.r + self.__vr * dt
         new_theta = self.pos.theta + self.__vt / self.pos.r * dt

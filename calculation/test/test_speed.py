@@ -22,7 +22,7 @@ pos = Position(r, 0, 0, 314.2)
 spd = Speed(pos)
 
 # %%------------   TEST CLASSES                           -----------------------------------------------------------> #
-spd.init_from_codes("v", v, "w", w)
+spd.init_from_codes("v", v, "alpha", alpha / 180 * np.pi)
 
 print("v:     {:.3f} - {:.3f}".format(v, spd.v))
 print("vr:    {:.3f} - {:.3f}".format(vr, spd.vr))

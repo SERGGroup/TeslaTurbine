@@ -94,7 +94,6 @@ class Stator:
 
         return Ma_1, Xi_diff, Xi_dix, Xi_rodg, v1, SS_1
 
-
     def solve(self):
 
         A0 = (2 * np.pi * (1.5 * self.geometry.r_int) / self.geometry.N_s) * self.geometry.Z_stat * self.geometry.H_s
