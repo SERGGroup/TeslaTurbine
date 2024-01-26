@@ -1,4 +1,4 @@
-from code.tesla_turbine_class import TeslaTurbine
+from main_code.tesla_turbine_class import TeslaTurbine
 import numpy as np
 
 
@@ -29,7 +29,7 @@ class Rotor:
         #
         # For detailed explanation on rotor discretization check:
         #
-        #   "code/sub_classes/other/rotor discretization explaination.xlsx"
+        #   "main_code/sub_classes/other/rotor discretization explaination.xlsx"
         #
 
         dr_tot = self.geometry.dr_tot
@@ -96,15 +96,6 @@ class Rotor:
 
         return rotor_array
 
-    @property
-    def rpm(self):
-
-        return self.__omega / np.pi * 30
-
-    @property
-    def omega(self):
-
-        return self.__omega
 
 
 class RotorStep:

@@ -1,4 +1,4 @@
-from code.tesla_turbine_class import TeslaTurbine
+from main_code.tesla_turbine_class import TeslaTurbine
 from REFPROPConnector import ThermodynamicPoint as TP
 import numpy as np
 
