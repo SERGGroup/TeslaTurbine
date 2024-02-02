@@ -87,6 +87,11 @@ class Speed:
         return Position(new_r, self.pos.omega, new_theta, new_gamma, new_t)
 
     @property
+    def u(self):
+
+        return self.pos.u
+
+    @property
     def v(self):
 
         return self.__v

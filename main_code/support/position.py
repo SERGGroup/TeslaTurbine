@@ -27,3 +27,18 @@ class Position:
     def u(self):
 
         return self.__omega * self.r
+
+    def theta_rel(self, theta_0=0., unit="rad"):
+
+        if unit == "deg" or unit == "°":
+
+            return self.theta * 180 / np.pi + theta_0
+
+        return self.theta + theta_0
+
+    def gamma_rel(self, gamma_0=0., unit="rad"):
+
+        if unit == "deg" or unit == "°":
+            return self.gamma * 180 / np.pi + gamma_0
+
+        return self.gamma + gamma_0

@@ -3,6 +3,8 @@ class RotorGeometry:
     d_ratio = 3
     stator_gap = 0.0001
     b_channel = 0.0001
+    roughness = 0.000001
+    n_channels = 50
 
     def __init__(self, main_geom):
 
