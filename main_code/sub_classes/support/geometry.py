@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class RotorGeometry:
 
     d_ratio = 3
@@ -62,8 +65,14 @@ class StatorGeometry:
     def r_int(self):
         return self.d_int / 2
 
-    chord = 0.75 * r_int
+    @property
+    def chord(self):
+        return 0.75 * self.r_int
 
+    @property
+    def alpha_rad(self):
+
+        return self.alpha1 * np.pi / 180
 
 class TeslaGeometry:
 

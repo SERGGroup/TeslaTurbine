@@ -1,4 +1,4 @@
-from main_code.tesla_turbine_class import TeslaTurbine
+#from main_code.tesla_turbine_class import TeslaTurbine
 from REFPROPConnector import ThermodynamicPoint as TP
 from main_code.support import Speed, Position
 import numpy as np
@@ -6,7 +6,7 @@ import numpy as np
 
 class Stator:
 
-    def __init__(self, main_turbine: TeslaTurbine):
+    def __init__(self, main_turbine):
 
         self.main_turbine = main_turbine
         self.options = self.main_turbine.options.stator

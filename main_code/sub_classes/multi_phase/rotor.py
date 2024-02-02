@@ -1,4 +1,4 @@
-from main_code.tesla_turbine_class import TeslaTurbine
+#from main_code.tesla_turbine_class import TeslaTurbine
 from main_code.support.speed import Speed, Position
 import numpy as np
 import scipy
@@ -8,7 +8,7 @@ class Rotor:
 
     dv_perc = 0
 
-    def __init__(self, main_turbine: TeslaTurbine):
+    def __init__(self, main_turbine):
 
         self.main_turbine = main_turbine
         self.geometry = self.main_turbine.geometry.rotor
@@ -172,8 +172,19 @@ class RotorStep:
         new_pos = self.speed.get_new_position(dr)
         new_speed = Speed(new_pos)
 
+        # Calcoli che producono:
+        #
+        #   - vt_new
+        #   - vr_new
+        #   - p_new
+        #   - h_new
+        #
+        # Se ti servono le velocità attuali sono in "self.speed."
+        # Se ti servono le condizioni attuali sono in "self.thermo_point.get_variable(...)"
 
-        new_speed.init_from_codes("v", v_new, "vr", vr_new)
+        new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
         new_step = RotorStep(main_rotor=self.main_rotor, speed=new_speed)
+        new_step.thermo_point.set_variable("P", p_new)
+        new_step.thermo_point.set_variable("H", h_new)
 
         return new_step
