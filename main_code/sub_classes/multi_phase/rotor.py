@@ -1,11 +1,11 @@
-#from main_code.tesla_turbine_class import TeslaTurbine
+# from main_code.tesla_turbine_class import TeslaTurbine
+from .support.void_fraction_handler import void_fraction_handler
 from main_code.support.speed import Speed, Position
 import numpy as np
 import scipy
 
 
 class Rotor:
-
     dv_perc = 0
 
     def __init__(self, main_turbine):
@@ -70,7 +70,6 @@ class Rotor:
         if self.options.profile_rotor:
 
             for i in range(len(self.rotor_points)):
-
                 curr_rotor = self.rotor_points[i]
 
                 rotor_array[i, 0] = i
@@ -113,6 +112,7 @@ class Rotor:
         return rotor_array
 
 
+@void_fraction_handler
 class RotorStep:
 
     def __init__(self, main_rotor: Rotor, speed: Speed):
@@ -120,6 +120,7 @@ class RotorStep:
         self.main_rotor = main_rotor
         self.options = main_rotor.options
 
+        self.m_dot = 1.
         self.speed = speed
         self.liq_speed = Speed(speed.pos)
         self.vap_speed = Speed(speed.pos)
@@ -137,7 +138,7 @@ class RotorStep:
 
     def evaluate_condition(self):
 
-        self.__epsilon = None
+        self.reset_epsilon()
 
         self.liq_phase.set_variable("P", self.thermo_point.get_variable("P"))
         self.vap_phase.set_variable("P", self.thermo_point.get_variable("P"))
@@ -145,9 +146,38 @@ class RotorStep:
         self.liq_phase.set_variable("x", 0)
         self.vap_phase.set_variable("x", 1)
 
-        self.evaluate_epsilon()
+    def get_new_step(self, dr):
 
-    def evaluate_epsilon(self):
+        new_pos = self.speed.get_new_position(dr)
+        new_speed = Speed(new_pos)
+
+        # Calcoli che producono:
+        #
+        #   - vt_new
+        #   - vr_new
+        #   - p_new
+        #   - h_new
+        #
+        # Se ti servono le velocità attuali sono in "self.speed."
+        # Se ti servono le condizioni attuali sono in "self.thermo_point.get_variable(...)"
+
+        # new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
+        new_step = RotorStep(main_rotor=self.main_rotor, speed=new_speed)
+        # new_step.thermo_point.set_variable("P", p_new)
+        # new_step.thermo_point.set_variable("H", h_new)
+
+        return new_step
+
+    # VOID FRACTION (epsilon) Handling Methods
+    @property
+    def epsilon(self):
+
+        if self.__epsilon is None:
+            self.__epsilon = self.__evaluate_epsilon()
+
+        return self.__epsilon
+
+    def __evaluate_epsilon(self):
 
         x = self.thermo_point.get_variable("x")
         rho_liq = self.liq_phase.get_variable("rho")
@@ -167,24 +197,6 @@ class RotorStep:
 
             return x / rho_vap / (a + b)
 
-    def get_new_step(self, dr):
+    def reset_epsilon(self):
 
-        new_pos = self.speed.get_new_position(dr)
-        new_speed = Speed(new_pos)
-
-        # Calcoli che producono:
-        #
-        #   - vt_new
-        #   - vr_new
-        #   - p_new
-        #   - h_new
-        #
-        # Se ti servono le velocità attuali sono in "self.speed."
-        # Se ti servono le condizioni attuali sono in "self.thermo_point.get_variable(...)"
-
-        new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
-        new_step = RotorStep(main_rotor=self.main_rotor, speed=new_speed)
-        new_step.thermo_point.set_variable("P", p_new)
-        new_step.thermo_point.set_variable("H", h_new)
-
-        return new_step
+        self.__epsilon = None
