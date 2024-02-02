@@ -2,7 +2,6 @@
 from .support.void_fraction_handler import void_fraction_handler
 from main_code.support.speed import Speed, Position
 import numpy as np
-import scipy
 
 
 class Rotor:
@@ -125,8 +124,6 @@ class RotorStep:
         self.liq_phase = self.main_rotor.input_point.duplicate()
         self.vap_phase = self.main_rotor.input_point.duplicate()
 
-        self.__epsilon = None
-
     @property
     def pos(self):
 
@@ -165,36 +162,3 @@ class RotorStep:
         # new_step.thermo_point.set_variable("H", h_new)
 
         return new_step
-
-    # VOID FRACTION (epsilon) Handling Methods
-    @property
-    def epsilon(self):
-
-        if self.__epsilon is None:
-            self.__epsilon = self.__evaluate_epsilon()
-
-        return self.__epsilon
-
-    def __evaluate_epsilon(self):
-
-        x = self.thermo_point.get_variable("x")
-        rho_liq = self.liq_phase.get_variable("rho")
-        rho_vap = self.vap_phase.get_variable("rho")
-
-        if self.main_rotor.options.tp_epsilon_model == "sarti":
-
-            return 1 / (1 + (1 - x) / x * (rho_vap / rho_liq) ** (2 / 3))
-
-        else:
-
-            m_dot = self.main_rotor.m_dot_ch
-            sigma = self.liq_phase.evaluate_RP_code("STN")
-            g = scipy.constants.g
-            a = (1 + 0.12 * (1 - x)) * (x / rho_vap + (1 - x) / rho_liq)
-            b = 1.18 / m_dot * (1 - x) * (g * sigma * (rho_liq - rho_vap) / rho_liq ** 2) ** (1 / 4)
-
-            return x / rho_vap / (a + b)
-
-    def reset_epsilon(self):
-
-        self.__epsilon = None

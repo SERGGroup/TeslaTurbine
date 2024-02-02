@@ -1,5 +1,5 @@
 import warnings
-import scipy
+import scipy.constants
 
 __ACCEPTABLE_VOID_FRACTION_MODELS = ["milazzo", "sarti"]
 __DEFAULT_VOID_FRACTION_MODEL = "milazzo"
@@ -14,6 +14,7 @@ __DEFAULT_VOID_FRACTION_MODEL = "milazzo"
     the acceptable models. 
     
 """
+
 
 def void_fraction_handler(original_class):
 
@@ -51,7 +52,7 @@ def void_fraction_handler(original_class):
         rho_liq = self.liq_phase.get_variable("rho")
         rho_vap = self.vap_phase.get_variable("rho")
 
-        if self.main_rotor.options.tp_epsilon_model == "sarti":
+        if self.options.tp_epsilon_model == "sarti":
 
             return 1 / (1 + (1 - x) / x * (rho_vap / rho_liq) ** (2 / 3))
 
