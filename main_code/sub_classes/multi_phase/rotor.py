@@ -24,11 +24,13 @@ class Rotor:
 
         self.__omega = self.main_turbine.stator.speed_out.vt / ((self.dv_perc + 1) * self.geometry.r_out)
         self.rotor_points = list()
+        self.evaluate_gap_losses()
 
         first_pos = Position(self.geometry.r_out, self.__omega)
         first_speed = Speed(position=first_pos)
         first_speed.equal_absolute_speed_to(self.main_turbine.stator.speed_out)
         first_step = RotorStep(self, first_speed)
+
         new_step = first_step
 
         #
@@ -52,10 +54,15 @@ class Rotor:
         if self.options.profile_rotor:
             self.rotor_points.append(new_step)
 
+    def evaluate_gap_losses(self):
+
+        # No Losses Model
+        self.main_turbine.points[1].copy_state_to(self.main_turbine.points[2])
+
     @property
     def m_dot_ch(self):
 
-        return self.main_turbine.m_dot / self.geometry.n_channels
+        return self.main_turbine.stator.m_dot_s / self.geometry.n_channels
 
     def get_rotor_array(self):
 
@@ -115,7 +122,6 @@ class RotorStep:
         self.main_rotor = main_rotor
         self.options = main_rotor.options
 
-        self.m_dot = 1.
         self.speed = speed
         self.liq_speed = Speed(speed.pos)
         self.vap_speed = Speed(speed.pos)
@@ -129,6 +135,11 @@ class RotorStep:
 
         return self.speed.pos
 
+    @property
+    def m_dot(self):
+
+        return self.main_rotor.m_dot_ch
+
     def evaluate_condition(self):
 
         self.reset_epsilon()
@@ -138,6 +149,8 @@ class RotorStep:
 
         self.liq_phase.set_variable("x", 0)
         self.vap_phase.set_variable("x", 1)
+
+        print(self.epsilon)
 
     def get_new_step(self, dr):
 

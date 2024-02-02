@@ -1,8 +1,10 @@
-import warnings
 import scipy.constants
+import numpy as np
+import warnings
 
-__ACCEPTABLE_VOID_FRACTION_MODELS = ["milazzo", "sarti"]
-__DEFAULT_VOID_FRACTION_MODEL = "milazzo"
+
+__ACCEPTABLE_VOID_FRACTION_MODELS = ["chisholm", "sarti"]
+__DEFAULT_VOID_FRACTION_MODEL = "chisholm"
 
 """
     
@@ -51,20 +53,38 @@ def void_fraction_handler(original_class):
         x = self.thermo_point.get_variable("x")
         rho_liq = self.liq_phase.get_variable("rho")
         rho_vap = self.vap_phase.get_variable("rho")
-
+        rho_ratio = rho_vap / rho_liq
         if self.options.tp_epsilon_model == "sarti":
 
-            return 1 / (1 + (1 - x) / x * (rho_vap / rho_liq) ** (2 / 3))
+            """
+                
+                From:
+                
+                    G.Sarti, "Development of an experimental data reduction method and 
+                    a two-phase model of a Tesla turbine for organic fluid", Master Thesis, 2020
+                    
+                Could be found in:
+                
+                    documentation/literature/Multi-Phase/Thesis/Tesi Sarti/Final Material/Tesi_Sarti_FullText.pdf
+            
+            """
+            return 1 / (1 + (1 - x) / x * rho_ratio ** (2 / 3))
 
         else:
 
-            m_dot = self.m_dot
-            sigma = self.liq_phase.evaluate_RP_code("STN")
-            g = scipy.constants.g
-            a = (1 + 0.12 * (1 - x)) * (x / rho_vap + (1 - x) / rho_liq)
-            b = 1.18 / m_dot * (1 - x) * (g * sigma * (rho_liq - rho_vap) / rho_liq ** 2) ** (1 / 4)
+            """
 
-            return x / rho_vap / (a + b)
+                From:
+
+                    D. Chisholm, "RESEARCH NOTE: VOID FRACTION DURING TWO-PHASE FLOW", 1973
+
+                Could be found in:
+
+                    documentation/literature/Multi-Phase/Void Fraction Modelling/chisholm1973 -other.pdf
+                    
+            """
+
+            return 1 / (1 + (1 - x) / x * rho_ratio * np.sqrt(1 - x * (1 - 1 / rho_ratio)))
 
     def reset_epsilon(self):
 
