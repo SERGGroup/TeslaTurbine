@@ -74,11 +74,12 @@ class StatorGeometry:
 
         return self.alpha1 * np.pi / 180
 
-class TeslaGeometry:
+
+class BaseTeslaGeometry:
 
     d_main = 0.55
 
-    def __init__(self):
+    def __init__(self, stator_geometry: type(StatorGeometry), rotor_geometry: type(RotorGeometry)):
 
-        self.stator = StatorGeometry(self)
-        self.rotor = RotorGeometry(self)
+        self.stator = stator_geometry(self)
+        self.rotor = rotor_geometry(self)

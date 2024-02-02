@@ -1,13 +1,29 @@
 from REFPROPConnector import ThermodynamicPoint as TP
-from .sub_classes.support import (TeslaGeometry, TeslaOptions)
-# from .sub_classes.single_phase import Stator #, Rotor
-from .sub_classes.multi_phase import Stator, Rotor
-import numpy as np
+from .base_classes.support import BaseTeslaGeometry, BaseTeslaOptions, StatorGeometry, RotorGeometry, StatorOptions, RotorOptions
+from .sub_classes.single_phase import Stator, Rotor
+
+""" 
+
+    TODO: 
+    
+    This python file has been kept to ensure portability with previous versions
+    It has to be removed as soon as possible! 
+    
+"""
+
+class TeslaGeometry(BaseTeslaGeometry):
+    def __init__(self):
+        super().__init__(stator_geometry=StatorGeometry, rotor_geometry=RotorGeometry)
+
+
+class TeslaOptions(BaseTeslaOptions):
+    def __init__(self):
+        super().__init__(stator_options=StatorOptions, rotor_options=RotorOptions)
 
 
 class TeslaTurbine:
 
-    def __init__(self, fluid, geometry: TeslaGeometry, options: TeslaOptions):
+    def __init__(self, fluid, geometry: BaseTeslaGeometry, options: BaseTeslaOptions):
 
         self.fluid = fluid
         self.geometry = geometry

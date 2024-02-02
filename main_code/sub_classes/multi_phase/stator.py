@@ -1,6 +1,6 @@
 #from main_code.tesla_turbine_class import TeslaTurbine
 from REFPROPConnector import ThermodynamicPoint as TP
-from main_code.support import Speed, Position
+from main_code.base_classes.support import Speed, Position
 import numpy as np
 
 

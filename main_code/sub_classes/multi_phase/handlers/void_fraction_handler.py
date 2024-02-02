@@ -1,10 +1,9 @@
-import scipy.constants
+from main_code.utils.general_option_modifier import append_general_option_modification
 import numpy as np
-import warnings
-
 
 __ACCEPTABLE_VOID_FRACTION_MODELS = ["chisholm", "sarti"]
 __DEFAULT_VOID_FRACTION_MODEL = "chisholm"
+__OPTION_NAME = 'tp_epsilon_model'
 
 """
     
@@ -54,7 +53,7 @@ def void_fraction_handler(original_class):
         rho_liq = self.liq_phase.get_variable("rho")
         rho_vap = self.vap_phase.get_variable("rho")
         rho_ratio = rho_vap / rho_liq
-        if self.options.tp_epsilon_model == "sarti":
+        if getattr(self.options, __OPTION_NAME) == "sarti":
 
             """
                 
@@ -118,46 +117,20 @@ def void_fraction_options(option_class):
 
     """
 
-    storage_name = '__tp_epsilon_model'
-
-    def models_name_property():
-
-        """Return a property that stores values under a private non-public name."""
-
-        @property
-        def prop(self):
-            return getattr(self, storage_name)
-
-        @prop.setter
-        def prop(self, model):
-
-            model = model.lower()
-            if model in __ACCEPTABLE_VOID_FRACTION_MODELS:
-                setattr(self, storage_name, model)
-
-            else:
-
-                warnings.warn(
-
-                    """
-                        !! WARNING from ROTOR OPTIONS !!
-                        \"{}\" is not an allowed void fraction model.
-                        Allowed Models are: {}
-                        The following model has been considered instead: \"{}\"
+    warning_message = """
     
-                    """.format(
+        !! WARNING from OPTIONS !!
+        \"{}\" is not an allowed void fraction model.
+        Allowed Models are: {}
+        The following model has been considered instead: \"{}\"
 
-                        model,
-                        __ACCEPTABLE_VOID_FRACTION_MODELS,
-                        self.__tp_epsilon_model
+    """
+    option_class = append_general_option_modification(
 
-                    )
+        option_class=option_class, option_name=__OPTION_NAME,
+        acceptable_values=__ACCEPTABLE_VOID_FRACTION_MODELS,
+        warning_message=warning_message, default_value=__DEFAULT_VOID_FRACTION_MODEL
 
-                )
-
-        return prop
-
-    setattr(option_class, storage_name, __DEFAULT_VOID_FRACTION_MODEL)
-    setattr(option_class, 'tp_epsilon_model', models_name_property())
+    )
 
     return option_class
