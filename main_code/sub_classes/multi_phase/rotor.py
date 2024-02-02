@@ -169,9 +169,11 @@ class RotorStep:
 
     def get_new_step(self, dr):
 
-        new_r = self.r - dr
-        new_step = RotorStep(main_rotor=self.main_rotor, r=new_r)
+        new_pos = self.speed.get_new_position(dr)
+        new_speed = Speed(new_pos)
 
 
+        new_speed.init_from_codes("v", v_new, "vr", vr_new)
+        new_step = RotorStep(main_rotor=self.main_rotor, speed=new_speed)
 
         return new_step
