@@ -19,7 +19,7 @@ class TeslaTurbine:
 
     def __init_states(self, n_points):
 
-        base_point = TP([self.fluid], [1])
+        base_point = TP([self.fluid], [1], unit_system="MASS BASE SI")
 
         self.points = list()
         self.static_points = list()
