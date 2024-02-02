@@ -6,7 +6,8 @@ import scipy
 
 
 class Rotor:
-    dv_perc = 0
+
+    dv_perc = 0.
 
     def __init__(self, main_turbine):
 
@@ -27,12 +28,7 @@ class Rotor:
 
         first_pos = Position(self.geometry.r_out, self.__omega)
         first_speed = Speed(position=first_pos)
-        first_speed.init_from_codes(
-
-            "v", self.main_turbine.stator.speed_out.v,
-            "alpha", self.main_turbine.geometry.stator.alpha1
-
-        )
+        first_speed.equal_absolute_speed_to(self.main_turbine.stator.speed_out)
         first_step = RotorStep(self, first_speed)
         new_step = first_step
 
@@ -147,6 +143,8 @@ class RotorStep:
         self.vap_phase.set_variable("x", 1)
 
     def get_new_step(self, dr):
+
+        self.evaluate_condition()
 
         new_pos = self.speed.get_new_position(dr)
         new_speed = Speed(new_pos)

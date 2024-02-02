@@ -3,7 +3,7 @@ import numpy as np
 
 class Speed:
 
-    __possible_codes = ["v", "v_t", "v_r", "w", "w_t", "w_r", "alpha", "beta"]
+    __possible_codes = ["v", "vt", "vr", "w", "wt", "wr", "alpha", "beta"]
 
     __v = 0.
     __vt = 0.
@@ -20,7 +20,7 @@ class Speed:
 
         self.pos = position
 
-    def init_from_codes(self, first_code, first_value, second_code, second_value):
+    def init_from_codes(self, first_code: str, first_value: float, second_code: str, second_value: float):
 
         """
         Input main_code can be:
@@ -69,15 +69,35 @@ class Speed:
         :return: None
         """
 
+        first_code = self.__reformat_code(first_code)
+        second_code = self.__reformat_code(second_code)
+
         if self.__codes_are_independent(first_code, second_code):
 
             self.__evaluate(first_code, first_value, second_code, second_value)
             self.__evaluate_other()
 
+    def equal_absolute_speed_to(self, other_speed):
+
+        self.init_from_codes(
+
+            "v", other_speed.v,
+            "alpha", other_speed.alpha
+
+        )
+
+    def equal_relative_speed_to(self, other_speed):
+
+        self.init_from_codes(
+
+            "w", other_speed.w,
+            "beta", other_speed.beta
+
+        )
+
     def get_new_position(self, dr):
 
         new_r = self.pos.r - dr
-
         dt = dr / self.__vr
 
         new_t = self.pos.t + dt
@@ -305,6 +325,15 @@ class Speed:
         self.__alpha = np.arcsin(self.__vt / self.v)
 
     @staticmethod
+    def __reformat_code(input_code: str):
+
+        input_code = input_code.lower()
+        input_code = input_code.replace("_", "")
+        input_code = input_code.strip()
+
+        return input_code
+
+    @staticmethod
     def __code_is_angle(code):
 
         return "alpha" == code or "beta" == code
@@ -331,7 +360,6 @@ class Speed:
             return False
 
         if (code == "alpha" and other_code == "w") or (code == "beta" and other_code == "v"):
-
             return False
 
         return self.__check_code_correct(code) and self.__check_code_correct(other_code)

@@ -4,7 +4,39 @@ import scipy
 __ACCEPTABLE_VOID_FRACTION_MODELS = ["milazzo", "sarti"]
 __DEFAULT_VOID_FRACTION_MODEL = "milazzo"
 
+"""
+    
+    This module implement the void fraction calculation inside a class (usually the rotor or stator step) 
+    by creating an "epsilon" property for the desired class and by defining the possible ways of performing 
+    the evaluation.
+    
+    The modules also automatically updates the option class by appending a property that allow to chose between 
+    the acceptable models. 
+    
+"""
+
 def void_fraction_handler(original_class):
+
+    """
+    This module implement the void fraction calculation inside a class (usually the rotor or stator step).
+    This is done by adding the following elements to the class:
+
+        - an "__epsilon" variable: stores the calculated void fraction (by default is None).
+        - an "evaluate_epsilon" method: that contains the epsilon evaluation procedure.
+        - an "epsilon" property: can be used to retrieve the calculated void fraction. If "__epsilon" is None then
+        evaluate it by calling the "evaluate_epsilon()" method.
+        - a "reset_epsilon" method: reset "__epsilon" to None so that, once the "epsilon" property is called again,
+        it will invoke again the "evaluate_epsilon" method.
+
+    these properties will be added to the class upon class generation using the decorator in the following way:
+
+        @void_fraction_handler
+
+        class <ClassName>:
+
+            ...
+
+    """
 
     def epsilon(self):
 
@@ -47,6 +79,24 @@ def void_fraction_handler(original_class):
 
 def void_fraction_options(option_class):
 
+    """
+    This module add the options related to the void fraction modelling to the option class of the Rotor or the Stator
+    This is done by adding the following elements to the class:
+
+        - an "__tp_epsilon_model" variable: stores the name of the model to be used in the calculation.
+        - a "tp_epsilon_model" property: to set and get the value of "__tp_epsilon_model". The value is set
+        only if the provided model name is part of the "__ACCEPTABLE_VOID_FRACTION_MODELS" list.
+
+    these properties will be added to the class upon class generation using the decorator in the following way:
+
+        @void_fraction_options
+
+        class <OptionClassName>:
+
+            ...
+
+    """
+
     storage_name = '__tp_epsilon_model'
 
     def models_name_property():
@@ -61,7 +111,7 @@ def void_fraction_options(option_class):
         def prop(self, model):
 
             model = model.lower()
-            if model in self.__TP_EPSILON_MODELS:
+            if model in __ACCEPTABLE_VOID_FRACTION_MODELS:
                 setattr(self, storage_name, model)
 
             else:

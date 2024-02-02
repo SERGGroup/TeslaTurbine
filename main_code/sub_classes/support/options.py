@@ -10,7 +10,6 @@ class RotorOptions:
     integr_variable = 0.001
 
 
-
 class StatorOptions:
 
     iterate_phi = True

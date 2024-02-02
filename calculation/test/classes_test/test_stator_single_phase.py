@@ -18,7 +18,6 @@ tt.points[0].set_variable("T", T_in)
 tt.static_points[1].set_variable("P", P_out)
 tt.static_points[1].set_variable("T", 300)
 
-
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
 tt.stator.solve()
 
