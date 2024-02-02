@@ -1,6 +1,6 @@
 from REFPROPConnector import ThermodynamicPoint as TP
 from .sub_classes.support import (TeslaGeometry, TeslaOptions)
-from .sub_classes.single_phase import Stator, Rotor
+from .sub_classes.multi_phase import Stator, Rotor
 import numpy as np
 
 

@@ -42,8 +42,8 @@ class RotorGeometry:
 
 class StatorGeometry:
 
-    d_ratio = 1.5
-    throat_width = 0.0002
+    d_ratio = 0.15
+    throat_width = 0.003
     Z_stat = 4
     H_s = 0.0005
     alpha1 = 85
@@ -76,7 +76,7 @@ class StatorGeometry:
 
 class TeslaGeometry:
 
-    d_main = 0.2
+    d_main = 0.55
 
     def __init__(self):
 
