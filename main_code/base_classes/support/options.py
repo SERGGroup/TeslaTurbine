@@ -11,6 +11,10 @@ class StatorOptions:
     iterate_phi = True
     n_phi_iteration = 50
 
+    profile_stator = True
+    n_stator = 100
+    integr_method = "Std"
+
 
 class BaseTeslaOptions:
 
