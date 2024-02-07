@@ -1,3 +1,3 @@
 from .support import TPTeslaGeometry, TPTeslaOptions
-from .stator import Stator
+from .stator import TPStator0D
 from .rotor import TPRotor

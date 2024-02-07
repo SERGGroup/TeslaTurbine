@@ -1,6 +1,6 @@
 from REFPROPConnector import ThermodynamicPoint as TP
 from .support import BaseTeslaGeometry, BaseTeslaOptions
-from .base_stator import BaseStator
+from .base_stator import BaseStator0D
 from .base_rotor import BaseRotor
 
 
@@ -9,7 +9,7 @@ class BaseTeslaTurbine:
     def __init__(
 
             self, fluid, geometry: BaseTeslaGeometry,
-            options: BaseTeslaOptions, stator: type(BaseStator),
+            options: BaseTeslaOptions, stator: type(BaseStator0D),
             rotor: type(BaseRotor)
 
     ):

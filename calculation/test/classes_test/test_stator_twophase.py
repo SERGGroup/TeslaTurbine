@@ -1,5 +1,5 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
-from main_code.sub_classes.multi_phase import Stator, TPRotor, TPTeslaGeometry, TPTeslaOptions
+from main_code.sub_classes.multi_phase import TPStator0D, TPRotor, TPTeslaGeometry, TPTeslaOptions
 from main_code.base_classes import BaseTeslaTurbine
 
 
@@ -16,7 +16,7 @@ P_in = 997086  # [Pa]
 x_in = 0        # [-]
 P_out = 736759  # [Pa]
 
-tt = BaseTeslaTurbine("R1234ze", curr_geometry, curr_options, stator=Stator, rotor=TPRotor)
+tt = BaseTeslaTurbine("R1234ze", curr_geometry, curr_options, stator=TPStator0D, rotor=TPRotor)
 tt.points[0].set_variable("P", P_in)
 tt.points[0].set_variable("x", x_in)
 

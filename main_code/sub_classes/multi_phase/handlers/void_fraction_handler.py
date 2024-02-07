@@ -30,6 +30,13 @@ def void_fraction_handler(original_class):
         - a "reset_epsilon" method: reset "__epsilon" to None so that, once the "epsilon" property is called again,
         it will invoke again the "evaluate_epsilon" method.
 
+    Inside the class there should be:
+
+        - a "self.m_dot" variable: A float containing the flow rate of the fluid
+        - a "self.thermo_point" variable: A REFPROP_connector "ThermodynamicPoint" containing the thermodynamic state.
+        - a "self.liq_phase" ad a "self.vap_phase" variable: two REFPROP_connector "ThermodynamicPoint" containing the
+        liquid and vapor properties of the fluid.
+
     these properties will be added to the class upon class generation using the decorator in the following way:
 
         @void_fraction_handler

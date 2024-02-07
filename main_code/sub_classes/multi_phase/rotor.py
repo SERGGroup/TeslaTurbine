@@ -1,7 +1,8 @@
 from main_code.base_classes.base_rotor import BaseRotor, BaseRotorStep, Speed
+from .handlers.flow_pressure_losses_handler import flow_losses_handler
 from .handlers.void_fraction_handler import void_fraction_handler
 
-
+@flow_losses_handler
 @void_fraction_handler
 class TPRotorStep(BaseRotorStep):
 
