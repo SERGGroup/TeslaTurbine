@@ -21,6 +21,7 @@ class BaseStator0D(ABC):
 
         self.Ma_1 = 0.
         self.eta_stat = 0.
+        self.m_dot_s = 0.
 
         self.__m_dot_max = None
         self.__m_dot_max_eval_point = None
@@ -28,10 +29,14 @@ class BaseStator0D(ABC):
         # TODO change in solve
         self.p_out = 0.
 
-    @property
-    def m_dot_s(self):
+    #@property
+    #def m_dot_s(self):
+    #
+    #    return self.m_dot_s
 
-        return self.main_turbine.m_dot_s
+    #@m_dot_s.setter
+    #def m_dot_s(self, value):
+    #    self.m_dot_s = value
 
     @abstractmethod
     def solve(self):

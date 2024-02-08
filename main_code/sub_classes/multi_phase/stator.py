@@ -12,6 +12,7 @@ class TPStator0D(BaseStator0D):
         super().__init__(main_turbine)
         self.__tmp_points = list()
 
+
         for i in range(3):
             self.__tmp_points.append(self.main_turbine.points[0].duplicate())
 
@@ -147,7 +148,7 @@ class TPStator0D(BaseStator0D):
 
         # Calculating Static Point [0] Conditions
         rho_00 = self.input_point.get_variable("rho")
-        v0 = self.m_dot_s / (rho_00 * A0)
+        v0 = self.m_dot_s/ (rho_00 * A0)
 
         self.static_input_point.set_variable("rho", rho_00)
         self.static_input_point.set_variable("h", self.input_point.get_variable("h") - 0.5 * v0 ** 2)
@@ -159,6 +160,7 @@ class TPStator0D(BaseStator0D):
         dh_is = self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h")
         self.eta_stat = dh_st/dh_is
 
+        self.p_out = self.output_point.get_variable("p")
 
 class TPStatorStep(BaseStatorStep):
     def get_new_position(self, ds):
@@ -296,16 +298,17 @@ class TPStator1D:
             self.Ma_1 = 1
 
 
-        # Calculating Static Point [1] Conditions
+        # Calculating Total Point [01] Conditions
         self.output_point.set_variable("h", self.input_point.get_variable("h"))
         self.output_point.set_variable("P", self.p_out)
 
+        # Calculating Static Point [1] Conditions
         self.static_output_point.set_variable("h", self.output_point.get_variable("h") - 0.5 * v_out ** 2)
         self.static_output_point.set_variable("P", self.p_out)
 
-
         x1 = self.static_output_point.get_variable("x")
         rho1 = self.static_output_point.get_variable("rho")
+
 
         mu_1l = self.__tmp_points[1].get_variable("visc")
         mu_1g = self.__tmp_points[2].get_variable("visc")
