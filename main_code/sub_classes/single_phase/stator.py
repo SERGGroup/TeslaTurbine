@@ -1,4 +1,4 @@
-from main_code.base_classes.support.speed import Speed, Position
+from main_code.support.speed import Speed, Position
 import numpy as np
 
 
