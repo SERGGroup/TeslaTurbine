@@ -1,33 +1,20 @@
-from main_code.support.speed import Speed, Position
+
+from main_code.base_classes import BaseStator0D, BaseStatorStep
 import numpy as np
 
 
-class Stator:
+class SPStator(BaseStator0D):
+
+    phi_n = 0.9
 
     def __init__(self, main_turbine):
 
-        self.main_turbine = main_turbine
-        self.options = self.main_turbine.options.stator
-
-        self.input_point = self.main_turbine.points[0]
-        self.output_point = self.main_turbine.points[1]
-
-        self.static_input_point = self.main_turbine.static_points[0]
-        self.static_output_point = self.main_turbine.static_points[1]
-        self.p_out = self.static_output_point.get_variable("P")
-
+        super().__init__(main_turbine)
         self.__tmp_points = list()
 
         for i in range(3):
             self.__tmp_points.append(self.main_turbine.points[0].duplicate())
 
-        self.geometry = self.main_turbine.geometry.stator
-        pos = Position(self.geometry.r_int, 0)
-        self.speed_out = Speed(pos)
-
-        self.Ma_1 = 0.
-        self.m_dot_s = 0.
-        self.eta_stat = 0.
 
     def __stator_calc(self, n_it):
 
@@ -125,3 +112,12 @@ class Stator:
         self.speed_out.init_from_codes("v", v_out, "alpha", self.geometry.alpha_rad)
 
         self.eta_stat = (self.output_point.get_variable("h") - self.static_output_point.get_variable("h"))/(self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h"))
+
+
+class SPStatorStep(BaseStatorStep):
+    def get_new_position(self, ds):
+        pass
+
+    def get_variations(self, ds):
+        pass
+

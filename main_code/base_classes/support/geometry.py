@@ -74,7 +74,6 @@ class StatorGeometry:
 
         return self.alpha1 * np.pi / 180
 
-
 class BaseTeslaGeometry:
 
     d_main = 0.55

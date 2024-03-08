@@ -1,2 +1,3 @@
-from .stator import Stator
-from .rotor import Rotor
+from .support import SPTeslaGeometry, SPTeslaOptions
+from .stator import SPStator
+from .rotor import SPRotor
