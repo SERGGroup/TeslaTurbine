@@ -14,7 +14,7 @@ curr_options.rotor.tp_epsilon_model = "chisholm"
 
 P_in = 997086  # [Pa]
 x_in = 0        # [-]
-P_out = 736759  # [Pa]
+P_out = 652161  # [Pa]
 
 tt = BaseTeslaTurbine("R1234ze", curr_geometry, curr_options, stator=TPStator0D, rotor=TPRotor)
 tt.points[0].set_variable("P", P_in)

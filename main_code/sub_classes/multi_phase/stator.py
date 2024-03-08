@@ -161,6 +161,7 @@ class TPStator0D(BaseStator0D):
         self.eta_stat = dh_st/dh_is
 
         self.p_out = self.output_point.get_variable("p")
+        self.H_1 = self.static_output_point.get_variable("h")
 
 class TPStatorStep(BaseStatorStep):
     def get_new_position(self, ds):
@@ -197,6 +198,10 @@ class TPStator1D:
         self.m_dot_s = 0.
         self.eta_stat = 0.
         self.phi_n = 0.9
+        self.H_1 = 0.
+
+    def __prof_calc(self, n_stator):
+        pass
 
     def __stator_calc(self, n_it):
 
@@ -341,4 +346,5 @@ class TPStator1D:
         dh_st = self.output_point.get_variable("h") - self.static_output_point.get_variable("h")
         dh_is = self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h")
         self.eta_stat = dh_st/dh_is
+        self.H_1 = self.static_output_point.get_variable("h")
 

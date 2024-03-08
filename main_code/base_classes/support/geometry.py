@@ -42,10 +42,10 @@ class RotorGeometry:
 
 class StatorGeometry:
 
-    d_ratio = 0.15
-    throat_width = 0.003
+    d_ratio = 0.2
+    throat_width = 0.0004934 # 0.003
     Z_stat = 4
-    H_s = 0.0005
+    H_s = 0.00094 # 0.0005
     alpha1 = 85
     N_s = 50
 

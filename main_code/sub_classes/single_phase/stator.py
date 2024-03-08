@@ -5,7 +5,6 @@ import numpy as np
 
 class SPStator(BaseStator0D):
 
-    phi_n = 0.9
 
     def __init__(self, main_turbine):
 
@@ -14,7 +13,6 @@ class SPStator(BaseStator0D):
 
         for i in range(3):
             self.__tmp_points.append(self.main_turbine.points[0].duplicate())
-
 
     def __stator_calc(self, n_it):
 
@@ -25,17 +23,16 @@ class SPStator(BaseStator0D):
 
             self.phi_n = (phi_n_up + phi_n_down) / 2
 
-            Ma_1, Xi_diff, Xi_Rodg, Xi_dix, v1, SS_1 = self.__evaluate_phi(self.phi_n)
+            self.Ma_1, self.Xi_diff, self.Xi_Rodg, self.Xi_dix, v1, SS_1 = self.__evaluate_phi(self.phi_n)
 
-            if Xi_diff < 0.0001:
+            if self.Xi_diff < 0.0001:
                 break
+            elif self.Xi_dix > self.Xi_Rodg:
+                phi_n_up = self.phi_n
             else:
-                if Xi_dix < Xi_Rodg:
-                    phi_n_up = self.phi_n
-                else:
-                    phi_n_down = self.phi_n
+                phi_n_down = self.phi_n
 
-        return Ma_1, v1, SS_1
+        return self.Ma_1, v1, SS_1, self.Xi_diff, self.Xi_Rodg, self.Xi_dix
 
     def __evaluate_phi(self, phi_n):
 
@@ -54,15 +51,15 @@ class SPStator(BaseStator0D):
         self.static_output_point.set_variable("P", self.p_out)
 
         rho1 = self.static_output_point.get_variable("rho")
-        mu1 = self.__tmp_points[0].get_variable("visc")
-        SS_1 = self.__tmp_points[0].get_variable("c")
+        mu1 = self.static_output_point.get_variable("visc")
+        SS_1 = self.static_output_point.get_variable("c")
         Ma_1 = v1 / SS_1
 
         # LOSS FACTOR RODGERS
         pitch = 2 * np.pi * self.geometry.r_int / self.geometry.Z_stat
         ni1 = mu1 / rho1
         Re_rodg = v1 * self.geometry.H_s / ni1
-        Xi_rodg = (0.05 / (Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha1) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha1) / self.geometry.H_s)
+        Xi_rodg = (0.05 / (Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha_rad) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha_rad) / self.geometry.H_s)
 
         # LOSS FACTOR DIXON (P. 257)
         Xi_dix = 1 / (phi_n ** 2) - 1
@@ -79,11 +76,11 @@ class SPStator(BaseStator0D):
 
         if self.options.iterate_phi:
 
-            self.Ma_1, v1, SS_1 = self.__stator_calc(n_it=self.options.n_phi_iteration)
+            self.Ma_1, v1, SS_1, self.Xi_diff, self.Xi_Rodg, self.Xi_dix, = self.__stator_calc(n_it=self.options.n_phi_iteration)
 
         else:
 
-            self.Ma_1, Xi_diff, Xi_dix, Xi_rodg, v1, SS_1 = self.__evaluate_phi(0.9)
+            self.Ma_1, self.Xi_diff, self.Xi_dix, self.Xi_rodg, v1, SS_1 = self.__evaluate_phi(0.958)
 
         # Checking Mach Number
 
@@ -112,6 +109,7 @@ class SPStator(BaseStator0D):
         self.speed_out.init_from_codes("v", v_out, "alpha", self.geometry.alpha_rad)
 
         self.eta_stat = (self.output_point.get_variable("h") - self.static_output_point.get_variable("h"))/(self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h"))
+
 
 
 class SPStatorStep(BaseStatorStep):
