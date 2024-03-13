@@ -140,7 +140,16 @@ class BaseStator1D(BaseStator0D):
 
     def solve(self):
 
-        # TODO INITIALIZATION
+        # if self.options.iterate_flow_rate:
+        #   inizzializza la portata
+        #   while true:
+        #     p_out_curr = self.evaluate_output_pressure()
+        #     if ...
+        #        break;
+        # else:
+        #
+        #   p_out_curr = self.evaluate_output_pressure()
+        #
         # flow rate -> initial speed
 
         first_pos = Position(self.geometry.d_0, omega=0.)
@@ -164,3 +173,8 @@ class BaseStator1D(BaseStator0D):
 
         if self.options.profile_stator:
             self.stator_points.append(new_step)
+
+    def evaluate_output_pressure(self):
+
+        # TODO
+        pass
