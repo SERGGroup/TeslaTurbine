@@ -24,14 +24,14 @@ class BaseRotorStep:
 
     def get_new_step(self, dr):
 
+        # Update Position
+        self.new_pos = self.speed.get_new_position(dr)
+
         # Evaluate main parameter variation
         dvt, dvr, dp, dh = self.get_variations(dr)
 
-        # Update Position
-        new_pos = self.speed.get_new_position(dr)
-
         # Update Speed
-        new_speed = Speed(new_pos)
+        new_speed = Speed(self.new_pos)
         vt_new = self.speed.vt + dvt
         vr_new = self.speed.vt + dvr
         new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
@@ -86,7 +86,10 @@ class BaseRotor:
 
         first_pos = Position(self.geometry.r_out, self.__omega)
         first_speed = Speed(position=first_pos)
+
+        # TODO: Change to static pressure model
         first_speed.equal_absolute_speed_to(self.main_turbine.stator.speed_out)
+
         first_step = self.__rotor_step_cls(self, first_speed)
 
         new_step = first_step
