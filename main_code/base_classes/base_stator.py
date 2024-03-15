@@ -16,8 +16,8 @@ class BaseStator0D(ABC):
         self.static_input_point = self.main_turbine.static_points[0]
         self.static_output_point = self.main_turbine.static_points[1]
 
-        pos = Position(self.geometry.r_int, 0)
-        self.speed_out = Speed(pos)
+        out_pos = Position(self.geometry.r_int, 0)
+        self.speed_out = Speed(out_pos)
 
         self.Ma_1 = 0.
         self.eta_stat = 0.
@@ -136,20 +136,24 @@ class BaseStator1D(BaseStator0D):
         self.__stator_step_cls = stator_step
         self.stator_points = list()
 
+        self.__omega = 0.
+
     def solve(self):
 
         # TODO INITIALIZATION
         # flow rate -> initial speed
 
-        first_pos = Position(self.geometry.r_out, omega=0.)
+        first_pos = Position(self.geometry.d_0, omega=0.)
         first_speed = Speed(position=first_pos)
+        # Here I have to modify the initialization of first speed, once the mass flow rate is calculated
+        # from the previous step
         first_speed.equal_absolute_speed_to(self.main_turbine.stator.speed_out)
         first_step = self.__stator_step_cls(self, first_speed)
 
         new_step = first_step
 
         self.stator_points = list()
-        ds = self.geometry.chord / self.options.n_stator
+        ds = (self.geometry.r_0 - self.geometry.r_int) / self.options.n_stator
 
         for i in range(self.options.n_stator):
 

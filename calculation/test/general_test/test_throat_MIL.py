@@ -53,7 +53,12 @@ for i in range(n):
 
 A_throat = m_dot_s / rhov_throat
 D_throat = A_throat / H_s
+
 # %%------------   PLOT                        -----------------------------------------------------------> #
 
 fig = plt.subplots()
+plt.plot(v, rhov)
+
+plt.show()
+
 
