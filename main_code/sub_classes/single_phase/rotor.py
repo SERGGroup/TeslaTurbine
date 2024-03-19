@@ -17,7 +17,6 @@ class SPRotorStep(BaseRotorStep):
         wt = self.speed.wt
         omega = self.new_pos.omega
 
-        # Ricontrollare questa portata m_dot!!
         vr_new = self.m_dot /(2 * np.pi * self.geometry.b_channel * r_new * rho)
 
         dvr = vr_new - self.speed.vr
@@ -50,60 +49,16 @@ class SPRotor(BaseRotor):
         self.isentropic_inlet = self.main_turbine.stator.isentropic_output
         self.intermediate_gap_point = self.main_turbine.points[0].duplicate()
 
-        inlet_pos = Position(self.geometry.r_out, 0)
-        self.rotor_inlet_speed = Speed(inlet_pos)
-
-    def solve(self):
-
-        self.rotor_points = list()
-        self.rotor_inlet_speed = self.evaluate_gap_losses()
-
-        self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
-
-        first_pos = Position(self.geometry.r_out, self.omega_in)
-        first_speed = Speed(position=first_pos)
-
-        # TODO: Change to static pressure model
-        first_speed.equal_absolute_speed_to(self.rotor_inlet_speed)
-
-        self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (first_speed.w ** 2) / 2 -
-                         (first_speed.u ** 2) / 2)
-
-        first_step = self.rotor_step_cls(self, first_speed)
-
-        new_step = first_step
-
-        #
-        # For detailed explanation on rotor discretization check:
-        #
-        #   "main_code/base_classes/other/rotor discretization explaination.xlsx"
-        #
-
-        dr_tot = self.geometry.dr_tot
-        b = self.options.integr_variable * dr_tot
-        a = np.power(dr_tot / b + 1, 1 / self.options.n_rotor)
-
-        for i in range(self.options.n_rotor):
-
-            if self.options.profile_rotor:
-                self.rotor_points.append(new_step)
-
-            dr = a ** i * (a - 1) * b
-            new_step = new_step.get_new_step(dr)
-
-        if self.options.profile_rotor:
-            self.rotor_points.append(new_step)
-
     def evaluate_gap_losses(self):
 
         # Evaluating Outlet Stator Pressure Loss
-        A_in_sb = self.main_turbine.stator.geometry.throat_width * self.main_turbine.stator.geometry.H_s
-        A_out_sb = ((self.main_turbine.stator.geometry.throat_width / np.tan(np.radians(90 - self.geometry.alpha1)) + self.geometry.gap / np.sin(
-            np.radians(90 - self.geometry.alpha1))) / np.cos(np.radians(90 - self.geometry.alpha1)) -
-                    self.geometry.gap * np.tan(np.radians(90 - self.geometry.alpha1)) - self.geometry.gap / np.tan(
-                    np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.stator.geometry.H_s
+        A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
+        A_out_sb = ((self.main_turbine.geometry.throat_width / np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) + self.geometry.gap / np.sin(
+            np.radians(90 - self.main_turbine.geometry.alpha1))) / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1)) -
+                    self.geometry.gap * np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
+                    np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.geometry.H_s
 
-        rapporto = self.geometry.Z_stat * A_out_sb / (2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.stator.geometry.H_s)
+        rapporto = self.main_turbine.stator.geometry.Z_stat * A_out_sb / (2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s)
         ke = (1 - A_in_sb / A_out_sb) ** 2
         dh = self.main_turbine.points[0].get_variable("h") - self.isentropic_inlet.get_variable("h")
         rho1 = self.main_turbine.static_points[1].get_variable("rho")
@@ -125,7 +80,7 @@ class SPRotor(BaseRotor):
         wr_1_R_star = vr_1_R_star
 
         # Evaluating Inlet Rotor Pressure Loss
-        A_in_im = 2 * np.pi * (self.geometry.d_out / 2) * self.geometry.H_s
+        A_in_im = 2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s
         A_out_im = self.geometry.n_discs * 2 * np.pi * (self.geometry.d_out / 2) * self.geometry.b_channel
         A2onA1 = (A_out_im / A_in_im)
         kc_1 = -0.12 * A2onA1 ** 4 + 1.02 * A2onA1 ** 3 - 1.28 * A2onA1 ** 2 - 0.12 * A2onA1 + 0.5

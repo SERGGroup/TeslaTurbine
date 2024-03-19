@@ -1,8 +1,9 @@
 from .support import Position, Speed
+from abc import ABC, abstractmethod
 import numpy as np
 
 
-class BaseRotorStep:
+class BaseRotorStep(ABC):
 
     def __init__(self, main_rotor, speed: Speed):
 
@@ -53,6 +54,7 @@ class BaseRotorStep:
 
         return new_step
 
+    @abstractmethod
     def get_variations(self, dr):
 
         return 0., 0., 0., 0.
@@ -66,7 +68,7 @@ class BaseRotorStep:
         cls.self_class = return_self_class
 
 
-class BaseRotor:
+class BaseRotor(ABC):
 
     dv_perc = 0.1315
 
@@ -79,27 +81,31 @@ class BaseRotor:
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
 
-        self.omega = 0.
+        self.omega_in = 0.
         self.rothalpy = 0.
         self.rotor_points = list()
         self.rotor_step_cls = rotor_step
+
+        inlet_pos = Position(self.geometry.r_out, 0)
+        self.rotor_inlet_speed = Speed(inlet_pos)
 
     def solve(self):
 
         self.rotor_points = list()
         self.evaluate_gap_losses()
 
-        self.omega = self.main_turbine.stator.speed_out.vt / ((self.dv_perc + 1) * self.geometry.r_out)
-        self.rothalpy = (self.main_turbine.static_points[2].get_variable("H") + (self.main_turbine.stator.speed_out.w ** 2) / 2 -
-                                                              (self.main_turbine.stator.speed_out.u ** 2) / 2)
-        first_pos = Position(self.geometry.r_out, self.omega)
+        self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
+
+        first_pos = Position(self.geometry.r_out, self.omega_in)
         first_speed = Speed(position=first_pos)
 
         # TODO: Change to static pressure model
-        first_speed.equal_absolute_speed_to(self.main_turbine.stator.speed_out)
+        first_speed.equal_absolute_speed_to(self.rotor_inlet_speed)
+
+        self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (first_speed.w ** 2) / 2 -
+                         (first_speed.u ** 2) / 2)
 
         first_step = self.rotor_step_cls(self, first_speed)
-
         new_step = first_step
 
         #
@@ -125,10 +131,27 @@ class BaseRotor:
 
         self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.points[3])
 
+    @abstractmethod
     def evaluate_gap_losses(self):
 
-        # No Losses Model
-        self.main_turbine.points[1].copy_state_to(self.main_turbine.points[2])
+        """
+
+            This Function must update:
+                - self.rotor_inlet_speed
+                - self.main_turbine.points[2]
+                - self.main_turbine.static_points[2]
+
+        """
+
+        # No Loss Model
+        self.rotor_inlet_speed = self.main_turbine.stator.speed_out
+
+        self.main_turbine.points[2].set_variable("P", 101325)
+        self.main_turbine.points[2].set_variable("h", 500000)
+
+        self.main_turbine.static_points[2].set_variable("P", 101325)
+        self.main_turbine.static_points[2].set_variable("h", 500000)
+
 
     @property
     def m_dot_ch(self):

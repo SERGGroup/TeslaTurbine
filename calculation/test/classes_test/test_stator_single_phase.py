@@ -4,7 +4,7 @@ from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometr
 from main_code.base_classes import BaseTeslaTurbine
 import matplotlib.pyplot as plt
 
-# %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
+# %%------------       INPUT DATA                         -----------------------------------------------------------> #
 curr_geometry = SPTeslaGeometry()
 curr_options = SPTeslaOptions()
 curr_options.stator.iterate_phi = True
@@ -22,22 +22,21 @@ tt.static_points[1].set_variable("P", P_out)
 tt.static_points[1].set_variable("T", 419.15)
 
 tt.geometry.d_main = 0.2
-tt.geometry.stator.H_s = 0.00094
-tt.geometry.stator.throat_width = 0.0004934
+tt.geometry.throat_width = 0.0004934
+tt.geometry.H_s = 0.00094
+tt.geometry.alpha1 = 85
 
-tt.geometry.rotor.H_s = 0.00094
-tt.geometry.rotor.throat_width = 0.0004934
 tt.geometry.rotor.d_ratio = 2.5
 tt.geometry.rotor.n_channels = 2
 
-# %%------------   STATOR SOLVE                        -----------------------------------------------------------> #
+# %%------------     STATOR SOLVE                        -----------------------------------------------------------> #
 tt.stator.solve()
 
-# %%------------   ROTOR SOLVE                        -----------------------------------------------------------> #
+# %%------------      ROTOR SOLVE                        -----------------------------------------------------------> #
 tt.rotor.solve()
 rotor_array = tt.rotor.get_rotor_array()
 
-# %%------------   PLOT                        -----------------------------------------------------------> #
+# %%------------             PLOT                        -----------------------------------------------------------> #
 
 fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
 

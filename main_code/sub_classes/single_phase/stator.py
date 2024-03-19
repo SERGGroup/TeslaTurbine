@@ -60,8 +60,8 @@ class SPStator(BaseStator0D):
         # LOSS FACTOR RODGERS
         pitch = 2 * np.pi * self.geometry.r_int / self.geometry.Z_stat
         ni1 = mu1 / rho1
-        Re_rodg = v1 * self.geometry.H_s / ni1
-        Xi_rodg = (0.05 / (Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha_rad) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha_rad) / self.geometry.H_s)
+        Re_rodg = v1 * self.main_turbine.geometry.H_s / ni1
+        Xi_rodg = (0.05 / (Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha_rad) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha_rad) / self.main_turbine.geometry.H_s)
 
         # LOSS FACTOR DIXON (P. 257)
         Xi_dix = 1 / (phi_n ** 2) - 1
@@ -73,8 +73,8 @@ class SPStator(BaseStator0D):
 
         self.p_out = self.static_output_point.get_variable("P")
 
-        A0 = (2 * np.pi * (1.5 * self.geometry.r_int) / self.geometry.N_s) * self.geometry.Z_stat * self.geometry.H_s
-        A1 = self.geometry.Z_stat * self.geometry.throat_width * self.geometry.H_s
+        A0 = (2 * np.pi * (1.5 * self.geometry.r_int) / self.geometry.N_s) * self.geometry.Z_stat * self.main_turbine.geometry.H_s
+        A1 = self.geometry.Z_stat * self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
 
         if self.options.iterate_phi:
 
