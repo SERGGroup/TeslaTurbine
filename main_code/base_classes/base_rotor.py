@@ -11,6 +11,9 @@ class BaseRotorStep:
 
         self.speed = speed
         self.thermo_point = self.main_rotor.input_point.duplicate()
+        self.geometry = self.main_rotor.geometry
+        self.__omega = 0.
+        self.rothalpy = 0.
 
     @property
     def pos(self):
@@ -28,21 +31,23 @@ class BaseRotorStep:
         self.new_pos = self.speed.get_new_position(dr)
 
         # Evaluate main parameter variation
-        dvt, dvr, dp, dh = self.get_variations(dr)
+        dvr, dwt, dp, dh = self.get_variations(dr)
 
         # Update Speed
         new_speed = Speed(self.new_pos)
-        vt_new = self.speed.vt + dvt
-        vr_new = self.speed.vt + dvr
-        new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
+        wt_new = self.speed.wt + dwt
+        vr_new = self.speed.vr + dvr
+        new_speed.init_from_codes("wt", wt_new, "vr", vr_new)
 
         # Init a new step
         new_class = self.self_class()
         new_step = new_class(main_rotor=self.main_rotor, speed=new_speed)
 
+        # Update Enthalpy through Rothalpy Conservation
+        h_new = self.main_rotor.rothalpy - (new_speed.w ** 2) / 2 + (new_speed.u ** 2) / 2
+
         # Update Thermodynamic Point
         p_new = self.thermo_point.get_variable("P") + dp
-        h_new = self.thermo_point.get_variable("H") + dh
         new_step.thermo_point.set_variable("P", p_new)
         new_step.thermo_point.set_variable("H", h_new)
 
@@ -63,7 +68,7 @@ class BaseRotorStep:
 
 class BaseRotor:
 
-    dv_perc = 0.
+    dv_perc = 0.1315
 
     def __init__(self, main_turbine, rotor_step: type(BaseRotorStep)):
 
@@ -74,23 +79,26 @@ class BaseRotor:
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
 
-        self.__omega = 0.
+        self.omega = 0.
+        self.rothalpy = 0.
         self.rotor_points = list()
-        self.__rotor_step_cls = rotor_step
+        self.rotor_step_cls = rotor_step
 
     def solve(self):
 
-        self.__omega = self.main_turbine.stator.speed_out.vt / ((self.dv_perc + 1) * self.geometry.r_out)
         self.rotor_points = list()
         self.evaluate_gap_losses()
 
-        first_pos = Position(self.geometry.r_out, self.__omega)
+        self.omega = self.main_turbine.stator.speed_out.vt / ((self.dv_perc + 1) * self.geometry.r_out)
+        self.rothalpy = (self.main_turbine.static_points[2].get_variable("H") + (self.main_turbine.stator.speed_out.w ** 2) / 2 -
+                                                              (self.main_turbine.stator.speed_out.u ** 2) / 2)
+        first_pos = Position(self.geometry.r_out, self.omega)
         first_speed = Speed(position=first_pos)
 
         # TODO: Change to static pressure model
         first_speed.equal_absolute_speed_to(self.main_turbine.stator.speed_out)
 
-        first_step = self.__rotor_step_cls(self, first_speed)
+        first_step = self.rotor_step_cls(self, first_speed)
 
         new_step = first_step
 
@@ -115,6 +123,8 @@ class BaseRotor:
         if self.options.profile_rotor:
             self.rotor_points.append(new_step)
 
+        self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.points[3])
+
     def evaluate_gap_losses(self):
 
         # No Losses Model
@@ -127,7 +137,7 @@ class BaseRotor:
 
     def get_rotor_array(self):
 
-        rotor_array = np.empty((self.options.n_rotor, 30))
+        rotor_array = np.empty((len(self.rotor_points), 30))
         rotor_array[:] = np.nan
 
         if self.options.profile_rotor:
@@ -158,16 +168,16 @@ class BaseRotor:
                 rotor_array[i, 15] = curr_rotor.thermo_point.get_variable("rho")
                 rotor_array[i, 16] = curr_rotor.thermo_point.get_variable("mu")
 
-                rotor_array[i, 17] = curr_rotor.Ma_R_a
-                rotor_array[i, 18] = curr_rotor.Ma_R_r
+                # rotor_array[i, 17] = curr_rotor.Ma_R_a
+                # rotor_array[i, 18] = curr_rotor.Ma_R_r
 
-                rotor_array[i, 19] = curr_rotor.Re_a
+                # rotor_array[i, 19] = curr_rotor.Re_a
                 rotor_array[i, 20] = curr_rotor.thermo_point.get_variable("quality")
-                rotor_array[i, 21] = curr_rotor.cosy
+                # rotor_array[i, 21] = curr_rotor.cosy
 
                 rotor_array[i, 24] = curr_rotor.pos.theta_rel(0, "°")
                 rotor_array[i, 25] = curr_rotor.pos.gamma_rel(0, "°")
-                rotor_array[i, 26] = curr_rotor.admr
+                # rotor_array[i, 26] = curr_rotor.admr
                 rotor_array[i, 27] = curr_rotor.pos.theta_rel(90, "°")
                 rotor_array[i, 28] = curr_rotor.pos.theta_rel(180, "°")
                 rotor_array[i, 29] = curr_rotor.pos.theta_rel(270, "°")

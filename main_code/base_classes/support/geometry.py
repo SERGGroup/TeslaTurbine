@@ -5,9 +5,17 @@ class RotorGeometry:
 
     d_ratio = 3
     stator_gap = 0.0001
-    b_channel = 0.0001
+    b_channel = 0.00007
     roughness = 0.000001
     n_channels = 50
+    n_discs = 2
+    gap = 0.0004
+    Z_stat = 4
+    alpha_1PS = 78.503
+
+    throat_width = 0.003
+    alpha1 = 85
+    H_s = 0.6
 
     def __init__(self, main_geom):
 
@@ -46,6 +54,7 @@ class StatorGeometry:
     Z_stat = 4
     H_s = 0.6
     N_s = 100
+    gap = 0.0004
 
     # Those values need to be specified ONLY if working with a 0D Stator version
     throat_width = 0.003
@@ -189,7 +198,11 @@ class StatorGeometry:
 
 class BaseTeslaGeometry:
 
-    d_main = 0.55
+    d_main = 0.2
+    throat_width = 0.0005
+    H_s = 0.6
+
+
 
     def __init__(
 

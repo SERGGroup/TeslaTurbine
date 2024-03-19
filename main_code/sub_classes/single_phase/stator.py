@@ -14,6 +14,8 @@ class SPStator(BaseStator0D):
         for i in range(3):
             self.__tmp_points.append(self.main_turbine.points[0].duplicate())
 
+        self.isentropic_output = self.main_turbine.points[0].duplicate()
+
     def __stator_calc(self, n_it):
 
         phi_n_up = 0.97
@@ -80,7 +82,7 @@ class SPStator(BaseStator0D):
 
         else:
 
-            self.Ma_1, self.Xi_diff, self.Xi_dix, self.Xi_rodg, v1, SS_1 = self.__evaluate_phi(0.958)
+            self.Ma_1, self.Xi_diff, self.Xi_dix, self.Xi_rodg, v1, SS_1 = self.__evaluate_phi(0.9)
 
         # Checking Mach Number
 
@@ -109,8 +111,7 @@ class SPStator(BaseStator0D):
         self.speed_out.init_from_codes("v", v_out, "alpha", self.geometry.alpha_rad)
 
         self.eta_stat = (self.output_point.get_variable("h") - self.static_output_point.get_variable("h"))/(self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h"))
-
-
+        self.__tmp_points[0].copy_state_to(self.isentropic_output)
 
 class SPStatorStep(BaseStatorStep):
     def get_new_position(self, ds):

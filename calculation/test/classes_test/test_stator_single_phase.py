@@ -1,6 +1,8 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
+import numpy as np
 from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometry, SPTeslaOptions
 from main_code.base_classes import BaseTeslaTurbine
+import matplotlib.pyplot as plt
 
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
 curr_geometry = SPTeslaGeometry()
@@ -19,9 +21,32 @@ tt.points[0].set_variable("T", T_in)
 tt.static_points[1].set_variable("P", P_out)
 tt.static_points[1].set_variable("T", 419.15)
 
+tt.geometry.d_main = 0.2
+tt.geometry.stator.H_s = 0.00094
+tt.geometry.stator.throat_width = 0.0004934
 
-# %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
+tt.geometry.rotor.H_s = 0.00094
+tt.geometry.rotor.throat_width = 0.0004934
+tt.geometry.rotor.d_ratio = 2.5
+tt.geometry.rotor.n_channels = 2
+
+# %%------------   STATOR SOLVE                        -----------------------------------------------------------> #
 tt.stator.solve()
 
-# %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
+# %%------------   ROTOR SOLVE                        -----------------------------------------------------------> #
 tt.rotor.solve()
+rotor_array = tt.rotor.get_rotor_array()
+
+# %%------------   PLOT                        -----------------------------------------------------------> #
+
+fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+
+ax.plot(rotor_array[:, 24] *np.pi / 180, rotor_array[:, 1])
+ax.set_rmax(0.1)
+ax.set_rticks([0.025, 0.05, 0.075, 0.1])
+ax.set_rlabel_position(-22.5)
+ax.grid(True)
+
+ax.set_title("theta_rel")
+
+plt.show()

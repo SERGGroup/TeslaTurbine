@@ -28,6 +28,7 @@ class Position:
 
         return self.__omega * self.r
 
+
     def theta_rel(self, theta_0=0., unit="rad"):
 
         if unit == "deg" or unit == "°":
