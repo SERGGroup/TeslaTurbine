@@ -12,8 +12,9 @@ class StatorOptions:
     n_phi_iteration = 50
 
     profile_stator = True
-    n_stator = 100
+    n_stator = 101
     integr_method = "Std"
+    roughness = 5e-7
 
 
 class BaseTeslaOptions:

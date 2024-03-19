@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from .support import Position, Speed
+from .support import BaseTeslaGeometry
+import numpy as np
 
 
 class BaseStator0D(ABC):
@@ -21,7 +23,10 @@ class BaseStator0D(ABC):
 
         self.Ma_1 = 0.
         self.eta_stat = 0.
-        self.m_dot_s = 0.
+        self.init_speed = 0.
+        self.n = 100
+        self.ax = np.zeros(self.n)
+        self.m_dot_s = 0
 
         self.__m_dot_max = None
         self.__m_dot_max_eval_point = None
@@ -29,14 +34,13 @@ class BaseStator0D(ABC):
         # TODO change in solve
         self.p_out = 0.
 
-    #@property
-    #def m_dot_s(self):
-    #
-    #    return self.m_dot_s
+    # @property
+    # def m_dot_s(self):
+    #     return self.m_dot_s
 
-    #@m_dot_s.setter
-    #def m_dot_s(self, value):
-    #    self.m_dot_s = value
+    # @m_dot_s.setter
+    # def m_dot_s(self, value):
+    #     self.m_dot_s = value
 
     @abstractmethod
     def solve(self):
@@ -60,7 +64,80 @@ class BaseStator0D(ABC):
 
         __tmp_point = self.input_point.duplicate()
 
+    def evaluate_two_phase_visc(self, p, x):
 
+        __tmp_point = list()
+
+        for i in range(2):
+            __tmp_point.append(self.input_point.duplicate())
+
+        __tmp_point[0].set_variable("p", p)
+        __tmp_point[0].set_variable("x", 0)
+
+        __tmp_point[1].set_variable("p", p)
+        __tmp_point[1].set_variable("x", 1)
+
+        mu_l = __tmp_point[0].get_variable("visc")
+        mu_g = __tmp_point[1].get_variable("visc")
+
+        mu = 0.5 * (mu_l * ((2 * mu_l + mu_g - 2 * x * (mu_l - mu_g)) / (2 * mu_l + mu_g + x * (mu_l - mu_g))) +
+                    mu_g * ((2 * mu_g + mu_l - 2 * (1 - x) * (mu_g - mu_l)) / (
+                            2 * mu_g + mu_l + (1 - x) * (mu_g - mu_l))))
+
+        return mu, mu_l, mu_g
+
+    def evaluate_lockhart_martinelli(self, p, x):
+
+        epsilon, rho_l, rho_g = self.evaluate_epsilon(p, x)
+        mu, mu_l, mu_g = self.evaluate_two_phase_visc(p, x)
+
+        chi_s = ((1 - x) / x) ** 1.8 * (rho_g / rho_l) * (mu_l / mu_g) ** 0.2
+        chi = np.sqrt(chi_s)
+
+        return chi, chi_s, mu_l, mu_g, mu
+
+    def evaluate_two_phase_ss(self, p, x):
+
+        __tmp_point = list()
+
+        for i in range(2):
+            __tmp_point.append(self.input_point.duplicate())
+
+        __tmp_point[0].set_variable("p", p)
+        __tmp_point[0].set_variable("x", 0)
+
+        __tmp_point[1].set_variable("p", p)
+        __tmp_point[1].set_variable("x", 1)
+
+        ss_l = __tmp_point[0].get_variable("c")
+        ss_g = __tmp_point[1].get_variable("c")
+
+        epsilon, rho_l, rho_g = self.evaluate_epsilon(p, x)
+
+        ss = (epsilon / (ss_g ** 2) + ((1 - epsilon) / ss_l) ** 2 + epsilon *
+              (1 - epsilon) * rho_l /(1.35 * p)) ** (-0.5)
+
+        return ss
+
+    def evaluate_epsilon(self, p, x):
+
+        __tmp_point = list()
+
+        for i in range(2):
+            __tmp_point.append(self.input_point.duplicate())
+
+        __tmp_point[0].set_variable("p", p)
+        __tmp_point[0].set_variable("x", 0)
+
+        __tmp_point[1].set_variable("p", p)
+        __tmp_point[1].set_variable("x", 1)
+
+        rho_l = __tmp_point[0].get_variable("rho")
+        rho_g = __tmp_point[1].get_variable("rho")
+
+        epsilon = 1 / (1 + (1 - x) / x * (rho_g / rho_l) ** 0.66)
+
+        return epsilon, rho_l, rho_g
 
 
 class BaseStatorStep(ABC):
@@ -137,6 +214,7 @@ class BaseStator1D(BaseStator0D):
         self.stator_points = list()
 
         self.__omega = 0.
+        self.inlet_point = 0.
 
     def solve(self):
 

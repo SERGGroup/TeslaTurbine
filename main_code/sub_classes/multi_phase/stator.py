@@ -56,34 +56,15 @@ class TPStator0D(BaseStator0D):
         self.static_output_point.set_variable("h", self.output_point.get_variable("h") - 0.5 * v1 ** 2 )
         self.static_output_point.set_variable("P", self.p_out)
 
-        x1 = self.static_output_point.get_variable("x")
-        rho1 = self.static_output_point.get_variable("rho")
-
-        self.__tmp_points[1].set_variable("p", self.static_output_point.get_variable("p"))
-        self.__tmp_points[1].set_variable("x", 0)
-
-        self.__tmp_points[2].set_variable("p", self.static_output_point.get_variable("p"))
-        self.__tmp_points[2].set_variable("x", 1)
-
-        mu_1l = self.__tmp_points[1].get_variable("visc")
-        mu_1g = self.__tmp_points[2].get_variable("visc")
-
-        mu1 = 0.5 * (mu_1l * ((2 * mu_1l + mu_1g - 2 * x1 * (mu_1l - mu_1g))/(2 * mu_1l + mu_1g + x1 * (mu_1l - mu_1g)) + mu_1g * ((2 * mu_1g + mu_1l - 2 * (1 - x1)*(mu_1g - mu_1l))/(2 * mu_1g + mu_1l + (1 - x1) * (mu_1g - mu_1l)))))
-
-        rho_1l = self.__tmp_points[1].get_variable("rho")
-        rho_1g = self.__tmp_points[2].get_variable("rho")
-
-        void_f1 = 1/(1 + ((1-x1)/x1) * (rho_1g/rho_1l) ** 0.66)
-
-        SS_1l = self.__tmp_points[1].get_variable("c")
-        SS_1g = self.__tmp_points[2].get_variable("c")
-
-        SS_1 = (void_f1/(SS_1g ** 2) + (1-void_f1 ** 2)/(SS_1l ** 2) + void_f1 * (1 - void_f1) * rho_1l/(1.35 * self.static_output_point.get_variable("p"))) ** (-0.5)
-        Ma_1 = v1/SS_1
+        mu1, mu_l, mu_g = self.evaluate_two_phase_visc(self.static_output_point.get_variable("p"),
+                                                       self.static_output_point.get_variable("x"))
+        ss1 = self.evaluate_two_phase_ss(self.static_output_point.get_variable("p"),
+                                         self.static_output_point.get_variable("x"))
+        Ma_1 = v1/ss1
 
         # LOSS FACTOR RODGERS
         pitch = 2 * np.pi * self.geometry.r_int / self.geometry.Z_stat
-        ni1 = mu1 / rho1
+        ni1 = mu1 / self.static_output_point.get_variable("rho")
         Re_rodg = v1 * self.geometry.H_s / ni1
         Xi_rodg = (0.05/(Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha_rad) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha_rad) / self.geometry.H_s)
 
@@ -93,7 +74,7 @@ class TPStator0D(BaseStator0D):
 
         Xi_diff = np.abs(Xi_dix - Xi_rodg)
 
-        return Ma_1, Xi_diff, Xi_dix, Xi_rodg, v1, SS_1
+        return Ma_1, Xi_diff, Xi_dix, Xi_rodg, v1, ss1
 
     def solve(self):
 
@@ -125,26 +106,13 @@ class TPStator0D(BaseStator0D):
         self.static_output_point.set_variable("h", self.output_point.get_variable("h") - 0.5 * v_out ** 2)
         self.static_output_point.set_variable("P", self.p_out)
 
-        x1 = self.static_output_point.get_variable("x")
-        rho1 = self.static_output_point.get_variable("rho")
+        mu1 = self.evaluate_two_phase_visc(self.static_output_point.get_variable("p"),
+                                             self.static_output_point.get_variable("x"))
+        ss1 = self.evaluate_two_phase_ss(self.static_output_point.get_variable("p"),
+                                           self.static_output_point.get_variable("x"))
+        self.Ma_1 = v1/ss1
 
-        mu_1l = self.__tmp_points[1].get_variable("visc")
-        mu_1g = self.__tmp_points[2].get_variable("visc")
-
-        mu1 = 0.5 * (mu_1l * ((2 * mu_1l + mu_1g - 2 * x1 * (mu_1l - mu_1g))/(2 * mu_1l + mu_1g + x1 * (mu_1l - mu_1g)) + mu_1g * ((2 * mu_1g + mu_1l - 2 * (1 - x1)*(mu_1g - mu_1l))/(2 * mu_1g + mu_1l + (1 - x1) * (mu_1g - mu_1l)))))
-
-        rho_1l = self.__tmp_points[1].get_variable("rho")
-        rho_1g = self.__tmp_points[2].get_variable("rho")
-
-        void_f1 = 1/(1 + ((1-x1)/x1) * (rho_1g/rho_1l) ** 0.66)
-
-        SS_1l = self.__tmp_points[1].get_variable("c")
-        SS_1g = self.__tmp_points[2].get_variable("c")
-
-        SS_1 = (void_f1/(SS_1g ** 2) + (1-void_f1 ** 2)/(SS_1l ** 2) + void_f1 * (1 - void_f1) * rho_1l/(1.35 * self.static_output_point.get_variable("p"))) ** (-0.5)
-        Ma_1 = v_out/SS_1
-
-        self.m_dot_s = A1 * rho1 * v_out
+        self.m_dot_s = A1 * self.static_output_point.get_variable("rho") * v_out
 
         # Calculating Static Point [0] Conditions
         rho_00 = self.input_point.get_variable("rho")
@@ -163,7 +131,18 @@ class TPStator0D(BaseStator0D):
         self.p_out = self.output_point.get_variable("p")
         self.H_1 = self.static_output_point.get_variable("h")
 
+
 class TPStatorStep(BaseStatorStep):
+    def __init__(self, main_stator, speed: Speed):
+
+        super().__init__(main_stator, speed)
+
+        self.liq_speed = Speed(speed.pos)
+        self.vap_speed = Speed(speed.pos)
+
+        self.liq_phase = self.main_stator.input_point.duplicate()
+        self.vap_phase = self.main_stator.input_point.duplicate()
+
     def get_new_position(self, ds):
         pass
 
@@ -173,9 +152,9 @@ class TPStatorStep(BaseStatorStep):
 
 class TPStator1D(BaseStator1D):
 
-    def __init__(self, main_turbine, stator_step: type(BaseStatorStep)):
+    def __init__(self, main_turbine):
 
-        super().__init__(main_turbine, stator_step)
+        super().__init__(main_turbine, BaseStatorStep)
 
         self.main_turbine = main_turbine
         self.options = self.main_turbine.options.stator
@@ -187,89 +166,144 @@ class TPStator1D(BaseStator1D):
         self.static_output_point = self.main_turbine.static_points[1]
         self.p_out = self.static_output_point.get_variable("P")
 
-        self.__tmp_points = list()
-
-        for i in range(3):
-            self.__tmp_points.append(self.main_turbine.points[0].duplicate())
-
         self.geometry = self.main_turbine.geometry.stator
         pos = Position(self.geometry.r_int, 0)
         self.speed_out = Speed(pos)
 
-        self.Ma_1 = 0.
+        self.IT = 10
+        self.cosyy = np.zeros(self.IT)
         self.m_dot_s = 0.
-        self.eta_stat = 0.
-        self.phi_n = 0.9
-        self.H_1 = 0.
 
-    def __prof_calc(self, n_stator):
-        pass
+        self.h = np.zeros(self.options.n_stator)
+        self.s = np.zeros(self.options.n_stator)
+        self.rho = np.zeros(self.options.n_stator)
+        self.rho_l = np.zeros(self.options.n_stator)
+        self.rho_g = np.zeros(self.options.n_stator)
+        self.x = np.zeros(self.options.n_stator)
+        self.p = np.zeros(self.options.n_stator)
+        self.epsilon = np.zeros(self.options.n_stator)
+        self.ss = np.zeros(self.options.n_stator)
+        self.Ma = np.zeros(self.options.n_stator)
+        self.mu = np.zeros(self.options.n_stator)
+        self.mu_l = np.zeros(self.options.n_stator)
+        self.mu_g = np.zeros(self.options.n_stator)
+        self.chi = np.zeros(self.options.n_stator)
+        self.chi_s = np.zeros(self.options.n_stator)
+
+        self.cosy = np.zeros(self.options.n_stator)
+        self.phi_g = np.zeros(self.options.n_stator)
+        self.phi_l = np.zeros(self.options.n_stator)
+        self.c1 = np.zeros(self.options.n_stator)
+        self.c2 = np.zeros(self.options.n_stator)
+        self.dh_l = np.zeros(self.options.n_stator)
+        self.dh_g = np.zeros(self.options.n_stator)
+        self.Re_l = np.zeros(self.options.n_stator)
+        self.Re_g = np.zeros(self.options.n_stator)
+
+        self.dpdl_l = np.zeros(self.options.n_stator)
+        self.dpdl_fr = np.zeros(self.options.n_stator)
+        self.f_l = np.zeros(self.options.n_stator)
+
+        self.__stator_points = list()
+
+        for i in range(self.options.n_stator):
+
+            self.__stator_points.append(self.main_turbine.points[0].duplicate())
+
+    def churchill_friction_factor(self, Re, rough, D):
+
+        A = (2.457 * np.log(1 / ((7 / Re) ** 0.9 + 0.27 * rough / D))) ** 16
+        B = (37530 / Re) ** 16
+
+        f = 2 * ((8 / Re) ** 12 + 1 / ((A + B) ** 1.5)) ** (1 / 12)
+
+        return f
+
     def solve(self):
 
-        self.p_out = self.static_output_point.get_variable("P")
+        pass
 
-        A0 = (2 * np.pi * (1.5 * self.geometry.r_int) / self.geometry.N_s) * self.geometry.Z_stat * self.geometry.H_s
-        A1 = self.geometry.Z_stat * self.geometry.throat_width * self.geometry.H_s
+    def solve_from_flow_rate(self):
 
-        if self.options.iterate_phi:
+        x_ss, y_ss, y_ps, x_ps, m, alpha, alpha_vert, dl = self.geometry.get_coordinates(self.options.n_stator)
+        A_th, A_eff = self.geometry.get_area(x_ss, y_ss, y_ps, x_ps, m, self.options.n_stator)
 
-            self.Ma_1, v1, SS_1 = self.__stator_calc(n_it=self.options.n_phi_iteration)
+        # Calculating Velocity and Thermodynamic Static Conditions at Stator Inlet [0]
+
+        rho_try = self.input_point.get_variable("rho")
+        first_speed = self.m_dot_s / (self.input_point.get_variable("rho") * A_eff[0])
+
+        h0 = self.input_point.get_variable("h") - 0.5 * first_speed ** 2
+        s0 = self.input_point.get_variable("s")
+        self.main_turbine.static_points[0].set_variable("h", h0)
+        self.main_turbine.static_points[0].set_variable("s", s0)
+
+        if self.main_turbine.static_points[0].get_variable("x") == 0:
+            mu0 = self.main_turbine.static_points[0].get_variable("visc")
+            ss0 = self.main_turbine.static_points[0].get_variable("c")
 
         else:
+            mu0, mu_l0, mu_g0 = self.evaluate_two_phase_visc(self.main_turbine.static_points[0].get_variable("p"),
+                                                             self.main_turbine.static_points[0].get_variable("x"))
+            ss0 = self.evaluate_two_phase_ss(self.main_turbine.static_points[0].get_variable("p"),
+                                             self.main_turbine.static_points[0].get_variable("x"))
 
-            self.Ma_1, Xi_diff, Xi_dix, Xi_rodg, v1, SS_1 = self.__evaluate_phi(self.phi_n)
+        Ma0 = first_speed / ss0
 
-        # Checking Mach Number
+        # Calculating Velocity and Thermodynamic Static Conditions Inside the Stator
 
-        if self.Ma_1 < 1:
-            v_out = v1
-        else:
-            v_out = SS_1
-            self.Ma_1 = 1
+        for i in range(self.options.n_stator):
 
+            if i == 0:
 
-        # Calculating Total Point [01] Conditions
-        self.output_point.set_variable("h", self.input_point.get_variable("h"))
-        self.output_point.set_variable("P", self.p_out)
+                self.h[i] = h0
+                self.s[i] = s0
+                self.rho[i] = self.main_turbine.static_points[0].get_variable("rho")
+                self.x[i] = self.main_turbine.static_points[0].get_variable("x")
+                self.p[i] = self.main_turbine.static_points[0].get_variable("p")
+                self.Ma[i] = Ma0
+                self.mu[i] = mu0
+                self.ss[i] = ss0
+                self.epsilon[i], self.rho_l[i], self.rho_g[i] = self.evaluate_epsilon(self.p[i], self.x[i])
+                self.chi[i], self.chi_s[i], self.mu_l[i], self.mu_g[i], self.mu[i] = self.evaluate_lockhart_martinelli(self.p[i], self.x[i])
+                self.__stator_points[0] = self.main_turbine.static_points[0].duplicate()
 
-        # Calculating Static Point [1] Conditions
-        self.static_output_point.set_variable("h", self.output_point.get_variable("h") - 0.5 * v_out ** 2)
-        self.static_output_point.set_variable("P", self.p_out)
+            else:
 
-        x1 = self.static_output_point.get_variable("x")
-        rho1 = self.static_output_point.get_variable("rho")
+                self.rho[i] = self.__stator_points[i-1].get_variable("rho")
 
+                # Calculating Pressure Losses --> Churchill Correlation requires to know the Reynolds number, i.e. the
+                # Lockhart-Martinelli parameter is used for retrieving the reynolds number and estimating the dpdl
 
-        mu_1l = self.__tmp_points[1].get_variable("visc")
-        mu_1g = self.__tmp_points[2].get_variable("visc")
+                self.epsilon[i], self.rho_l[i], self.rho_g[i] = self.evaluate_epsilon(self.p[i-1], self.x[i-1])
+                self.chi[i], self.chi_s[i], self.mu_l[i], self.mu_g[i], self.mu[i] = (
+                                                           self.evaluate_lockhart_martinelli(self.p[i-1], self.x[i-1]))
 
-        mu1 = 0.5 * (mu_1l * ((2 * mu_1l + mu_1g - 2 * x1 * (mu_1l - mu_1g))/(2 * mu_1l + mu_1g + x1 * (mu_1l - mu_1g)) + mu_1g * ((2 * mu_1g + mu_1l - 2 * (1 - x1)*(mu_1g - mu_1l))/(2 * mu_1g + mu_1l + (1 - x1) * (mu_1g - mu_1l)))))
+                self.cosy[i] = 20
 
-        rho_1l = self.__tmp_points[1].get_variable("rho")
-        rho_1g = self.__tmp_points[2].get_variable("rho")
+                self.phi_l[i] = 1 + (self.cosy[i] / self.chi[i]) + 1 / self.chi_s[i]
+                self.phi_g[i] = self.chi[i] * self.phi_l[i]
 
-        void_f1 = 1/(1 + ((1-x1)/x1) * (rho_1g/rho_1l) ** 0.66)
+                self.c1[i] = (1 - self.epsilon[i]) ** 4 * self.phi_l[i] ** 0.98
+                self.c2[i] = self.epsilon[i] ** 4 * self.phi_g[i] ** 0.38
 
-        SS_1l = self.__tmp_points[1].get_variable("c")
-        SS_1g = self.__tmp_points[2].get_variable("c")
+                self.dh_l[i] = np.sqrt(4 * A_eff[i] * (1 - self.epsilon[i]) / (self.c1[i] * np.pi))
+                self.dh_g[i] = np.sqrt(4 * A_eff[i] * self.epsilon[i] / (self.c2[i] * np.pi))
 
-        SS_1 = (void_f1/(SS_1g ** 2) + (1-void_f1 ** 2)/(SS_1l ** 2) + void_f1 * (1 - void_f1) * rho_1l/(1.35 * self.static_output_point.get_variable("p"))) ** (-0.5)
-        Ma_1 = v_out/SS_1
+                self.Re_l[i] = (self.m_dot_s * (1 - self.x[i - 1]) * self.dh_l[i] /
+                                (A_eff[i] * (1 - self.epsilon[i]) * self.mu_l[i]))
+                self.Re_g[i] = (self.m_dot_s * self.x[i - 1] * self.dh_g[i] /
+                                (A_eff[i] * self.epsilon[i] * self.mu_g[i]))
 
-        self.m_dot_s = A1 * rho1 * v_out
+                self.f_l[i] = self.churchill_friction_factor(self.Re_l[i], self.options.roughness, self.dh_l[i])
+                self.dpdl_l[i] = (2 * self.f_l[i] * self.rho_l[i] *
+                            (self.m_dot_s * self.x[i-1] / (self.rho_l[i] * A_eff[i] * (1 - self.epsilon[i]))) ** 2) / self.dh_l[i]
+                self.dpdl_fr[i] = self.phi_l[i] * self.dpdl_l[i]
 
-        # Calculating Static Point [0] Conditions
-        rho_00 = self.input_point.get_variable("rho")
-        v0 = self.m_dot_s / (rho_00 * A0)
+                self.p[i] = self.p[i-1] - dl[i] * self.dpdl_fr[i] - 0.5 * (self.rho[i] * (self.m_dot_s / (self.rho[i] * A_eff[i])) ** 2
+                                                                           + self.rho[i-1] * (self.m_dot_s / (self.rho[i-1] * A_eff[i-1])) ** 2)
+                self.h[i] = h0 - 0.5 * (self.m_dot_s / (self.rho[i] * A_eff[i])) ** 2
 
-        self.static_input_point.set_variable("rho", rho_00)
-        self.static_input_point.set_variable("h", self.input_point.get_variable("h") - 0.5 * v0 ** 2)
-
-        self.speed_out = Speed(Position(self.geometry.r_int, 0))
-        self.speed_out.init_from_codes("v", v_out, "alpha", self.geometry.alpha_rad)
-
-        dh_st = self.output_point.get_variable("h") - self.static_output_point.get_variable("h")
-        dh_is = self.output_point.get_variable("h") - self.__tmp_points[0].get_variable("h")
-        self.eta_stat = dh_st/dh_is
-        self.H_1 = self.static_output_point.get_variable("h")
-
+                self.__stator_points[i].set_variable("p", self.p[i])
+                self.__stator_points[i].set_variable("h", self.h[i])
+                self.x[i] = self.__stator_points[i].get_variable("x")

@@ -6,13 +6,14 @@ from main_code.base_classes import BaseTeslaTurbine
 # %%------------   SETUP DATA                             -----------------------------------------------------------> #
 curr_geometry = TPTeslaGeometry()
 curr_geometry.stator.d_int = 0.5    # [m]
+curr_geometry.stator.H_s = 0.0005   # [m]
 
 curr_options = TPTeslaOptions()
 curr_options.stator.iterate_phi = False
 curr_options.rotor.profile_rotor = True
 curr_options.rotor.tp_epsilon_model = "chisholm"
 
-P_in = 997086  # [Pa]
+P_in = 997233  # [Pa]
 x_in = 0        # [-]
 P_out = 652161  # [Pa]
 
