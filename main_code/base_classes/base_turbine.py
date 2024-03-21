@@ -22,7 +22,9 @@ class BaseTeslaTurbine:
 
         self.stator = stator(self)
         self.rotor = rotor(self)
-
+        self.P_in = 0.
+        self.P_out = 0.
+        self.T_in = 0.
     def __init_states(self, n_points):
 
         base_point = TP([self.fluid], [1], unit_system="MASS BASE SI")
@@ -35,6 +37,30 @@ class BaseTeslaTurbine:
             self.static_points.append(base_point.duplicate())
 
     def iterate_pressure(self):
+        P_up = self.P_in
+        P_down = self.P_out
+        n_it = 100
+
+        for i in range (n_it):
+
+            P_1s = (P_up + P_down) / 2
+
+            self.static_points[1].set_variable("P", P_1s)
+            self.stator.solve()
+            self.rotor.solve()
+            P_out_tent = self.points[3].get_variable("P")
+            errore = abs((P_out_tent - self.P_out) / P_out_tent)
+
+            if errore < 0.0001:
+                break
+            elif self.P_out < P_out_tent:
+                P_up = P_1s
+            else:
+                P_down = P_1s
+
+
+
+
 
         # TODO
         pass
