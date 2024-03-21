@@ -129,7 +129,7 @@ class BaseRotor(ABC):
         if self.options.profile_rotor:
             self.rotor_points.append(new_step)
 
-        self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.points[3])
+        self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.static_points[3])
 
     @abstractmethod
     def evaluate_gap_losses(self):
@@ -151,7 +151,6 @@ class BaseRotor(ABC):
 
         self.main_turbine.static_points[2].set_variable("P", 101325)
         self.main_turbine.static_points[2].set_variable("h", 500000)
-
 
     @property
     def m_dot_ch(self):

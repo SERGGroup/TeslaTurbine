@@ -48,19 +48,13 @@ class BaseTeslaTurbine:
             self.static_points[1].set_variable("P", P_1s)
             self.stator.solve()
             self.rotor.solve()
-            P_out_tent = self.points[3].get_variable("P")
-            errore = abs((P_out_tent - self.P_out) / P_out_tent)
+            P_out_tent = self.static_points[3].get_variable("P")
+            error = abs((P_out_tent - self.P_out) / P_out_tent)
 
-            if errore < 0.0001:
+            if error < 0.0001:
                 break
             elif self.P_out < P_out_tent:
                 P_up = P_1s
             else:
                 P_down = P_1s
 
-
-
-
-
-        # TODO
-        pass

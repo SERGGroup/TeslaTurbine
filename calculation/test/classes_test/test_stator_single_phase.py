@@ -19,7 +19,6 @@ tt.points[0].set_variable("P", P_in)
 tt.points[0].set_variable("T", T_in)
 
 tt.static_points[1].set_variable("P", P_out)
-tt.static_points[1].set_variable("T", 419.15)
 
 tt.geometry.d_main = 0.2
 tt.geometry.throat_width = 0.0004934
