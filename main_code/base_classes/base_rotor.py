@@ -88,6 +88,7 @@ class BaseRotor(ABC):
 
         inlet_pos = Position(self.geometry.r_out, 0)
         self.rotor_inlet_speed = Speed(inlet_pos)
+        self.first_speed = Speed(inlet_pos)
 
     def solve(self):
 
@@ -97,15 +98,15 @@ class BaseRotor(ABC):
         self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
 
         first_pos = Position(self.geometry.r_out, self.omega_in)
-        first_speed = Speed(position=first_pos)
+        self.first_speed = Speed(position=first_pos)
 
         # TODO: Change to static pressure model
-        first_speed.equal_absolute_speed_to(self.rotor_inlet_speed)
+        self.first_speed.equal_absolute_speed_to(self.rotor_inlet_speed)
 
-        self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (first_speed.w ** 2) / 2 -
-                         (first_speed.u ** 2) / 2)
+        self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (self.first_speed.w ** 2) / 2 -
+                         (self.first_speed.u ** 2) / 2)
 
-        first_step = self.rotor_step_cls(self, first_speed)
+        first_step = self.rotor_step_cls(self, self.first_speed)
         new_step = first_step
 
         #
