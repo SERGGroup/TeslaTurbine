@@ -9,7 +9,6 @@ from tqdm import tqdm
 curr_geometry = SPTeslaGeometry()
 curr_options = SPTeslaOptions()
 curr_options.stator.iterate_phi = True
-curr_geometry.stator.d_int = 0.2        # [m]
 
 tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=SPStator, rotor=SPRotor)
 
@@ -27,34 +26,33 @@ tt.geometry.alpha1 = 85
 
 # Design Parameters
 tt.geometry.rotor.d_ratio = 2.5
-tt.geometry.d_main = 0.2
 tt.geometry.rotor.b_channel = 0.00007
-tt.geometry.throat_width = 0.0004934
 tt.rotor.dv_perc = 0.1315
 
-tt.iterate_pressure()
-rotor_array = tt.rotor.get_rotor_array()
+D_main = np.linspace(0.2, 0.5, 10)
+TW = np.linspace(0.0005, 0.0015, 10)
 
-# output_array = np.empty((len(P_in), 4))
+output_array = np.empty((len(D_main) * len(TW), 5))
 
 # %%------------             CALCULATIONS                -----------------------------------------------------------> #
-# for i in tqdm(range(len(P_in))):
+for i in tqdm(range(len(D_main))):
 
-#    tt.P_in = P_in[i]
-#    tt.points[0].set_variable("P", P_in[i])
-#    tt.points[0].set_variable("T", T_in)
+    tt.geometry.d_main = D_main[i]
+    curr_geometry.stator.d_int = D_main[i]
 
-#   tt.iterate_pressure()
-#   rotor_array = tt.rotor.get_rotor_array()
+    for j in range(len(TW)):
 
-#    output_array[i, 0] = tt.stator.p_out
-#    output_array[i, 1] = tt.stator.m_dot_s
-#    output_array[i, 2] = rotor_array[-1, 9]
-#    output_array[i, 3] = rotor_array[-1, 13]
+        tt.geometry.throat_width = TW[j]
+
+        tt.iterate_pressure()
+        rotor_array = tt.rotor.get_rotor_array()
+        tt.evaluate_performances()
+
+        output_array[len(TW) * i + j, 0] = D_main[i]
+        output_array[len(TW) * i + j, 1] = TW[j]
+        output_array[len(TW) * i + j, 2] = tt.Eta_tesla_ss
+        output_array[len(TW) * i + j, 3] = tt.work
+        output_array[len(TW) * i + j, 4] = tt.power
 
 # %%------------             PLOT RESULTS                -----------------------------------------------------------> #
-fig, ax = plt.subplots()
-
-# plt.plot(P_in, output_array[:, 1])
-plt.show()
-# print(output_array)
+print(output_array)

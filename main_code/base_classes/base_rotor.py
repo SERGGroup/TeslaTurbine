@@ -83,6 +83,7 @@ class BaseRotor(ABC):
 
         self.omega_in = 0.
         self.rothalpy = 0.
+        self.rpm = 0.
         self.rotor_points = list()
         self.rotor_step_cls = rotor_step
 
@@ -96,7 +97,7 @@ class BaseRotor(ABC):
         self.evaluate_gap_losses()
 
         self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
-
+        self.rpm = self.omega_in * 60 / (2 * np.pi)
         first_pos = Position(self.geometry.r_out, self.omega_in)
         self.first_speed = Speed(position=first_pos)
 

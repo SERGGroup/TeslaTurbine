@@ -34,6 +34,10 @@ tt.stator.solve()
 # %%------------      ROTOR SOLVE                        -----------------------------------------------------------> #
 tt.rotor.solve()
 rotor_array = tt.rotor.get_rotor_array()
+tt.evaluate_performances()
+rpm = tt.rotor.rpm
+P_out = rotor_array[-1, 11]
+power = tt.power
 
 # %%------------             PLOT                        -----------------------------------------------------------> #
 
