@@ -71,6 +71,7 @@ class BaseRotorStep(ABC):
 class BaseRotor(ABC):
 
     dv_perc = 0.1315
+    omega = None
 
     def __init__(self, main_turbine, rotor_step: type(BaseRotorStep)):
 
@@ -96,7 +97,12 @@ class BaseRotor(ABC):
         self.rotor_points = list()
         self.evaluate_gap_losses()
 
-        self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
+        if self.omega is None:
+            self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
+        else:
+            self.omega_in = self.omega
+            self.dv_perc = self.rotor_inlet_speed.vt / self.omega_in - self.geometry.r_out - 1
+
         self.rpm = self.omega_in * 60 / (2 * np.pi)
         first_pos = Position(self.geometry.r_out, self.omega_in)
         self.first_speed = Speed(position=first_pos)

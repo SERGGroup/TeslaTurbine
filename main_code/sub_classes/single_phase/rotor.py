@@ -62,7 +62,8 @@ class SPRotor(BaseRotor):
         ke = (1 - A_in_sb / A_out_sb) ** 2
         dh = self.main_turbine.points[0].get_variable("h") - self.isentropic_inlet.get_variable("h")
         rho1 = self.main_turbine.static_points[1].get_variable("rho")
-        v_1s = np.sqrt(2 * dh)
+        v_1ss = np.sqrt(2 * dh)
+        v_1s = self.main_turbine.stator.phi_n * v_1ss
         DP_sbocco = 0.5 * ke * rho1 * v_1s ** 2
 
         # Evaluating Thermodynamic Conditions After Stator Loss
