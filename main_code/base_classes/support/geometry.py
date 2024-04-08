@@ -144,6 +144,7 @@ class StatorGeometry:
         return dup, dbottom, dmidline, m, m_perp
 
     def geometric_parameters(self, X_ss, Y_ss, Y_ps, X_ps, m, n):
+
         A_th = np.zeros(n)
         A_eff = np.zeros(n)
 

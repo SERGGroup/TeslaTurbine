@@ -45,6 +45,7 @@ class BaseTeslaTurbine:
         self.isentropic_outlet = base_point.duplicate()
 
     def iterate_pressure(self):
+
         P_up = self.P_in
         P_down = self.P_out
         n_it = 100
@@ -53,9 +54,8 @@ class BaseTeslaTurbine:
 
             P_1s = (P_up + P_down) / 2
 
-            self.static_points[1].set_variable("P", P_1s)
-            self.stator.solve()
-            self.rotor.solve()
+            self.solve_with_stator_outlet_pressure(P_1s)
+
             P_out_tent = self.static_points[3].get_variable("P")
             error = abs((P_out_tent - self.P_out) / P_out_tent)
 
@@ -65,6 +65,12 @@ class BaseTeslaTurbine:
                 P_up = P_1s
             else:
                 P_down = P_1s
+
+    def solve_with_stator_outlet_pressure(self, P_1s):
+
+        self.static_points[1].set_variable("P", P_1s)
+        self.stator.solve()
+        self.rotor.solve()
 
     def evaluate_performances(self):
 

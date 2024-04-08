@@ -70,8 +70,8 @@ class BaseRotorStep(ABC):
 
 class BaseRotor(ABC):
 
-    dv_perc = 0.1315
-    omega = None
+    __dv_perc = 0.1315
+    __omega = None
 
     def __init__(self, main_turbine, rotor_step: type(BaseRotorStep)):
 
@@ -82,9 +82,8 @@ class BaseRotor(ABC):
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
 
-        self.omega_in = 0.
         self.rothalpy = 0.
-        self.rpm = 0.
+
         self.rotor_points = list()
         self.rotor_step_cls = rotor_step
 
@@ -97,14 +96,7 @@ class BaseRotor(ABC):
         self.rotor_points = list()
         self.evaluate_gap_losses()
 
-        if self.omega is None:
-            self.omega_in = self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
-        else:
-            self.omega_in = self.omega
-            self.dv_perc = self.rotor_inlet_speed.vt / self.omega_in - self.geometry.r_out - 1
-
-        self.rpm = self.omega_in * 60 / (2 * np.pi)
-        first_pos = Position(self.geometry.r_out, self.omega_in)
+        first_pos = Position(self.geometry.r_out, self.omega)
         self.first_speed = Speed(position=first_pos)
 
         # TODO: Change to static pressure model
@@ -138,6 +130,7 @@ class BaseRotor(ABC):
             self.rotor_points.append(new_step)
 
         self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.static_points[3])
+        self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.points[3])
 
     @abstractmethod
     def evaluate_gap_losses(self):
@@ -213,3 +206,58 @@ class BaseRotor(ABC):
                 rotor_array[i, 29] = curr_rotor.pos.theta_rel(270, "°")
 
         return rotor_array
+
+    @property
+    def dv_perc(self):
+
+        if self.__omega is None:
+
+            return self.__dv_perc
+
+        else:
+
+            try:
+
+                return self.rotor_inlet_speed.vt / self.omega - self.geometry.r_out - 1
+
+            except:
+
+                return None
+
+    @dv_perc.setter
+    def dv_perc(self, dv_perc):
+
+        self.__dv_perc = dv_perc
+        self.__omega = None
+
+    @property
+    def omega(self):
+
+        if self.__omega is None:
+
+            try:
+
+                return self.rotor_inlet_speed.vt / ((self.dv_perc + 1) * self.geometry.r_out)
+
+            except:
+
+                return None
+
+        else:
+
+            return self.__omega
+
+    @omega.setter
+    def omega(self, omega):
+
+        self.__omega = omega
+
+    @property
+    def rpm(self):
+
+        return self.omega * 60 / (2 * np.pi)
+
+    @rpm.setter
+    def rpm(self, rpm):
+
+        self.omega = rpm / 60 * (2 * np.pi)

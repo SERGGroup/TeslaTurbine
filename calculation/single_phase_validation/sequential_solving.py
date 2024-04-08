@@ -1,8 +1,11 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
 import numpy as np
 from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometry, SPTeslaOptions
-from main_code.base_classes import BaseTeslaTurbine
+from main_code.base_classes import BaseTeslaTurbine, CALCULATION_FOLDER
 import matplotlib.pyplot as plt
+import pandas as pd
+import os.path
+
 
 # %%------------       INPUT DATA                         -----------------------------------------------------------> #
 curr_geometry = SPTeslaGeometry()
@@ -43,8 +46,8 @@ rpm = tt.rotor.rpm
 P_out = rotor_array[-1, 11]
 power = tt.power
 
-# %%------------             TRAJECTORY PLOT                        -------------------------------------------------> #
 
+# %%------------             TRAJECTORY PLOT                        -------------------------------------------------> #
 fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
 
 ax.plot(rotor_array[:, 24] *np.pi / 180, rotor_array[:, 1])
@@ -98,7 +101,7 @@ plt.xlabel("Radial Distance [m]", color = "Black", fontsize = 14)
 plt.ylabel("Velocity [m/s]", color = "Black", fontsize = 14)
 plt.xlim(0.04, 0.1)
 plt.ylim(0, 75)
-plt.legend(edgecolor = "Black", fontsize = 12)
+plt.legend(edgecolor="Black", fontsize = 12)
 plt.grid()
 
 plt.show()
@@ -122,3 +125,8 @@ plt.legend(edgecolor = "Black", fontsize = 12)
 plt.grid()
 
 plt.show()
+# %%------------             IMPORT EES RESULTS                ------------------------------------------------------> #
+py_df = pd.DataFrame(rotor_array)
+RESULT_FOLDER = os.path.join(CALCULATION_FOLDER, "single_phase_validation", "results")
+excel_file = os.path.join(RESULT_FOLDER, "rotor_array.xlsx")
+py_df.to_excel(excel_file)
