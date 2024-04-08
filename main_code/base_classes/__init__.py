@@ -11,5 +11,6 @@ from .support import (
 )
 
 import os.path
+
 CODE_FOLDER = os.path.dirname(os.path.dirname(__file__))
 CALCULATION_FOLDER = os.path.join(os.path.dirname(CODE_FOLDER), 'calculation')
