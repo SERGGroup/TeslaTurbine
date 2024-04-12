@@ -32,6 +32,8 @@ output_point = base_point.duplicate()
 h_out = H0 - eta_stat * (H0 - H1_is)
 output_point.set_variable("P", P_out)
 output_point.set_variable("h", h_out)
+T_out = output_point.get_variable("T")
+x_out = output_point.get_variable("x")
 
 H1 = output_point.get_variable("h")
 S1 = output_point.get_variable("S")

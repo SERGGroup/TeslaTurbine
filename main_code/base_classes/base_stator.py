@@ -24,6 +24,7 @@ class BaseStator0D(ABC):
         self.Ma_1 = 0.
         self.eta_stat = 0.
         self.init_speed = 0.
+        self.v_out = 0.
         self.n = 100
         self.ax = np.zeros(self.n)
         self.m_dot_s = 0

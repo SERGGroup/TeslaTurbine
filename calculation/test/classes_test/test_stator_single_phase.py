@@ -40,6 +40,19 @@ P_out = rotor_array[-1, 11]
 power = tt.power
 
 # %%------------             PLOT                        -----------------------------------------------------------> #
+fig1 = plt.subplots()
+plt.plot(rotor_array[:, 1], rotor_array[:, 9], color = "darkblue")
+plt.plot(rotor_array[:, 1], rotor_array[:, 10], color = "darkred")
+# plt.plot(rotor_array[:, 2], rotor_array[:, 11], color = "darkred")
+
+plt.grid()
+plt.ylabel("Velocity [m/s]", fontsize = 13)
+plt.xlabel("Radial Axis [m]", fontsize = 13)
+
+plt.legend(["Absolute Velocity", "Relative Velocity"], fontsize = 13, loc = "right")
+plt.show()
+
+# %%------------             PLOT                        -----------------------------------------------------------> #
 
 fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
 
@@ -49,6 +62,6 @@ ax.set_rticks([0.025, 0.05, 0.075, 0.1])
 ax.set_rlabel_position(-22.5)
 ax.grid(True)
 
-ax.set_title("theta_rel")
+ax.set_title("Relative Position")
 
 plt.show()

@@ -19,7 +19,7 @@ T_in = 367.05                                 # [K]
 tt.T_in = T_in
 tt.points[0].set_variable("P", P_in)
 tt.points[0].set_variable("T", T_in)
-tt.P_out = 3800000                            # [Pa]
+# tt.P_out = 3800000                            # [Pa]
 
 tt.geometry.rotor.n_channels = 2
 tt.geometry.H_s = 0.001
@@ -30,16 +30,17 @@ tt.geometry.rotor.d_ratio = 2.5
 tt.geometry.throat_width = 0.0005
 tt.geometry.d_main = 0.5
 curr_geometry.stator.d_int = 0.5
+tt.geometry.rotor.b_channel = 0.00007
 
-B = np.linspace(0.00004, 0.0001, 10)
+P_out = np.linspace(3400000, 4500000, 10)
 dw_perc = np.linspace(-0.3, 0.3, 20)
 
-output_array = np.empty((len(B) * len(dw_perc), 6))
+output_array = np.empty((len(P_out) * len(dw_perc), 6))
 
 # %%------------             CALCULATIONS                -----------------------------------------------------------> #
-for i in tqdm(range(len(B))):
+for i in tqdm(range(len(P_out))):
 
-    tt.geometry.rotor.b_channel = B[i]
+    tt.P_out = P_out[i]
 
     for j in range(len(dw_perc)):
 
@@ -49,7 +50,7 @@ for i in tqdm(range(len(B))):
         rotor_array = tt.rotor.get_rotor_array()
         tt.evaluate_performances()
 
-        output_array[len(dw_perc) * i + j, 0] = B[i]
+        output_array[len(dw_perc) * i + j, 0] = P_out[i]
         output_array[len(dw_perc) * i + j, 1] = dw_perc[j]
         output_array[len(dw_perc) * i + j, 2] = tt.Eta_tesla_ss
         output_array[len(dw_perc) * i + j, 3] = tt.work

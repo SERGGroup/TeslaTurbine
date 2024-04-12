@@ -2,6 +2,7 @@
 from REFPROPConnector import ThermodynamicPoint as TP
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, zoomed_inset_axes
 
 # %%------------       DATA                        -----------------------------------------------------------> #
 n = 100
@@ -93,13 +94,28 @@ P2 = np.linspace(21000000, 10000000, 12)
 P = np.concatenate((P1, P2))
 m = [0.01508, 0.02134, 0.03014, 0.03366, 0.03682, 0.03971, 0.04239, 0.04489, 0.04723, 0.06549, 0.07843, 0.08834, 0.09613, 0.10221, 0.10686, 0.11016, 0.11224, 0.11316, 0.11292, 0.11151]
 
-# %%------------              PLOT                        -----------------------------------------------------------> #
+# %%------------              PLOT 1                       ----------------------------------------------------------> #
 
 fig = plt.subplots()
 
-plt.plot(Ph, m_dot_arr, linestyle= "--", color='darkblue', linewidth = '1.5')
-plt.plot(P[2:], m[2:], color='Darkred')
+plt.plot(Ph, m_dot_arr, color='black', linewidth = '1.5')
+plt.plot(P[2:], m[2:], linestyle = '--', color='Darkred')
+plt.grid()
+
+plt.xlabel("Back Pressure [Pa]")
+plt.ylabel("Mass Flow Rate [kg/s]")
+
+plt.legend(['New Stator Model', 'Old Stator Model'], loc = 'lower left', edgecolor = 'black', facecolor = 'white')
+plt.title("Single Phase Validation")
+plt.show()
+# %%------------              PLOT 2                       ----------------------------------------------------------> #
+
+fig1 = plt.subplots()
+
+plt.plot(v, rhov)
+plt.grid()
+
+plt.ylabel("Velocity [m/s]")
+plt.xlabel("Density*Velocity [kg/(m2s]")
 
 plt.show()
-
-
