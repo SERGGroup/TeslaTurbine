@@ -30,7 +30,7 @@ tt.geometry.throat_width = 0.0004934
 tt.geometry.H_s = 0.00094
 tt.geometry.alpha1 = 85
 
-tt.rotor.omega = 628.3185
+tt.rotor.rpm = 6000
 
 tt.geometry.rotor.d_ratio = 2.5
 tt.geometry.rotor.n_channels = 2

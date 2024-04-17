@@ -82,6 +82,7 @@ class BaseRotor(ABC):
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
 
+        self.gap_losses_control = True
         self.rothalpy = 0.
 
         self.rotor_points = list()

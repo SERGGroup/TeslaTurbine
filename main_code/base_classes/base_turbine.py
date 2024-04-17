@@ -28,6 +28,7 @@ class BaseTeslaTurbine:
         self.T_in = 0.
 
         self.Eta_tesla_ss = 0.
+        self.Eta_rotor_ss = 0.
         self.work = 0.
         self.power = 0.
 
@@ -84,3 +85,18 @@ class BaseTeslaTurbine:
 
         self.work = self.rotor.first_speed.vt * self.rotor.first_speed.u - self.rotor.rotor_points[-1].speed.vt * self.rotor.rotor_points[-1].speed.u
         self.power = self.work * self.rotor.m_dot_ch
+
+    def evaluate_rotor_performances(self):
+
+        self.isentropic_outlet = self.static_points[2].duplicate()
+
+        self.isentropic_outlet.set_variable("s", self.static_points[2].get_variable("s"))
+        self.isentropic_outlet.set_variable("p", self.static_points[3].get_variable("p"))
+
+        self.Eta_rotor_ss = (self.static_points[2].get_variable("h") - self.static_points[3].get_variable("h")) / (
+                self.static_points[2].get_variable("h") - self.isentropic_outlet.get_variable("h"))
+
+        self.work = self.rotor.first_speed.vt * self.rotor.first_speed.u - self.rotor.rotor_points[-1].speed.vt * \
+                    self.rotor.rotor_points[-1].speed.u
+        self.power = self.work * self.rotor.m_dot_ch
+

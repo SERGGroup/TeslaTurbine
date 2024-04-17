@@ -43,15 +43,17 @@ class SPStator(BaseStator0D):
         self.__tmp_points[0].set_variable("s", self.input_point.get_variable("s"))
 
         dh = self.input_point.get_variable("h") - self.__tmp_points[0].get_variable("h")
+
         # [1s] ISOENTROPIC STATOR OUTLET
         self.v_1s = np.sqrt(2 * dh)
         v1 = phi_n * self.v_1s
 
-        self.output_point.set_variable("h", self.input_point.get_variable("h"))
-        self.output_point.set_variable("P", self.p_out)
-
-        self.static_output_point.set_variable("h", self.output_point.get_variable("h") - 0.5 * v1 ** 2)
+        self.static_output_point.set_variable("h", self.input_point.get_variable("h") - 0.5 * v1 ** 2)
         self.static_output_point.set_variable("P", self.p_out)
+
+        self.output_point.set_variable("h", self.input_point.get_variable("h"))
+        self.output_point.set_variable("P", self.p_out + 0.5 * self.static_output_point.get_variable("rho") * v1 ** 2)
+
 
         rho1 = self.static_output_point.get_variable("rho")
         mu1 = self.static_output_point.get_variable("visc")
@@ -102,10 +104,12 @@ class SPStator(BaseStator0D):
         self.static_input_point.set_variable("h", self.input_point.get_variable("h") - 0.5 * v0 ** 2)
 
         # Calculating Static Point [1] Conditions
-        self.output_point.set_variable("h", self.input_point.get_variable("h"))
-        self.output_point.set_variable("P", self.p_out)
-        self.static_output_point.set_variable("h", self.output_point.get_variable("h") - 0.5 * self.v_out ** 2)
+
+        self.static_output_point.set_variable("h", self.input_point.get_variable("h") - 0.5 * self.v_out ** 2)
         self.static_output_point.set_variable("P", self.p_out)
+
+        self.output_point.set_variable("h", self.input_point.get_variable("h"))
+        self.output_point.set_variable("P", self.p_out + 0.5 * self.static_output_point.get_variable("rho") * self.v_out ** 2)
 
         rho1 = self.static_output_point.get_variable("rho")
         self.m_dot_s = A1 * rho1 * self.v_out
@@ -217,7 +221,10 @@ class SPStatorMil(BaseStator0D):
         self.speed_out.init_from_codes("v", self.out_speed, "alpha", self.geometry.alpha_rad)
 
         self.main_turbine.points[1].set_variable("h", self.main_turbine.points[0].get_variable("h"))
-        self.main_turbine.points[1].set_variable("s", self.main_turbine.static_points[1].get_variable("s"))
+        # self.main_turbine.points[1].set_variable("s", self.main_turbine.static_points[1].get_variable("s"))
+        self.main_turbine.points[1].set_variable("p", self.main_turbine.static_points[1].get_variable("p") + 0.5 *
+                                                 self.main_turbine.static_points[1].get_variable("rho") * self.out_speed
+                                                 ** 2)
 
 
 class SPStatorStep(BaseStatorStep):

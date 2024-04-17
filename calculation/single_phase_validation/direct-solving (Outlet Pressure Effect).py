@@ -28,14 +28,14 @@ tt.points[0].set_variable("T", T_in)
 tt.geometry.d_main = 0.2
 tt.geometry.H_s = 0.00094
 tt.geometry.alpha1 = 85
-tt.rotor.omega = 628.3185
+tt.rotor.gap_losses_control = True
 
 # Design Parameters
 tt.geometry.rotor.d_ratio = 2.5
 tt.geometry.rotor.b_channel = 0.00007
 tt.geometry.throat_width = 0.0004934
-tt.rotor.dv_perc = 0.1315
 tt.geometry.rotor.n_channels = 2
+tt.rotor.rpm = 6000
 
 output_array = np.empty((len(P_out), 6))
 
@@ -60,7 +60,7 @@ py_df = pd.DataFrame(output_array, columns=['P_out', 'Eta_Tesla_ss', 'Work', 'Po
 
 # %%------------             IMPORT EES RESULTS                ------------------------------------------------------> #
 
-df1 = pd.read_excel("test.xlsx")
+df1 = pd.read_excel("C:/Users/iggig/Desktop/ees_test.xlsx")
 
 # Extracting Array from Dataframe
 EES_array = df1.to_numpy()

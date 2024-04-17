@@ -1,14 +1,17 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
+from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometry, SPTeslaOptions, SPStatorMil
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes, zoomed_inset_axes
 from REFPROPConnector import ThermodynamicPoint as TP
+from main_code.base_classes import BaseTeslaTurbine
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes, zoomed_inset_axes
+
 
 # %%------------       DATA                        -----------------------------------------------------------> #
 n = 100
 P_in = 22000000               # [Pa]
 T_in = 423.15                 # [K]
-P_out = 10000000              # [Pa]
+P_out = 4000000              # [Pa]
 eta_stat = 0.9409             # [-]
 H_s = 0.00094                 # [m]
 throat_width = 0.0004934      # [m]
@@ -37,8 +40,25 @@ output_point.set_variable("h", h_out)
 H1 = output_point.get_variable("h")
 S1 = output_point.get_variable("S")
 
-# %%------------   CALCULATIONS                        -----------------------------------------------------------> #
 
+# %%------------       MILAZZO STATOR                         -------------------------------------------------------> #
+curr_geometry = SPTeslaGeometry()
+curr_options = SPTeslaOptions()
+
+tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=SPStatorMil, rotor=SPRotor)
+tt.T_in = T_in
+tt.P_in = P_in
+tt.points[0].set_variable("P", P_in)
+tt.points[0].set_variable("T", T_in)
+
+tt.stator.stator_eff = eta_stat
+
+# Design Parameters
+tt.geometry.throat_width = throat_width
+tt.geometry.H_s = H_s
+
+
+# %%------------   CALCULATIONS                        -----------------------------------------------------------> #
 Hh = np.linspace(H0, H1, n)
 Ph = np.linspace(P_in, P_out, n)
 Ss = np.linspace(S0, S0, n)
@@ -51,6 +71,7 @@ v = np.zeros(n)
 rhov = np.zeros(n)
 
 m_dot_arr = np.zeros(n)
+m_dot_arr_class = np.zeros(n)
 
 int_points = list()
 
@@ -82,11 +103,15 @@ for i in range(n):
 
     m_dot_arr[i] = m_dot_s
 
+    tt.solve_with_stator_outlet_pressure(Ph[i])
+    m_dot_arr_class[i] = tt.stator.m_dot_s
+
 output_point.set_variable("P", P_out)
 output_point.set_variable("h", h_out)
 
 v_out = np.sqrt(2 * (H0 - h_out))
 Phi = v_out / v1ss
+
 
 # %%------------       COMPARISON WITH EES                -----------------------------------------------------------> #
 P1 = np.linspace(21900000, 21100000, 8)
@@ -99,8 +124,9 @@ m = [0.01508, 0.02134, 0.03014, 0.03366, 0.03682, 0.03971, 0.04239, 0.04489, 0.0
 fig = plt.subplots()
 
 plt.plot(Ph, m_dot_arr, color='black', linewidth = '1.5')
+plt.plot(Ph, m_dot_arr_class, linewidth = '1.5', linestyle = '--')
 plt.plot(P[2:], m[2:], linestyle = '--', color='Darkred')
-plt.grid()
+# plt.grid()
 
 plt.xlabel("Back Pressure [Pa]")
 plt.ylabel("Mass Flow Rate [kg/s]")
