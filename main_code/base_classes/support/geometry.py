@@ -7,6 +7,7 @@ class RotorGeometry:
     b_channel = 0.00007
     roughness = 0.000001
     n_channels = 50
+    n_packs = 50
     n_discs = 2
     gap = 0.0004
     alpha_1PS = 78.503

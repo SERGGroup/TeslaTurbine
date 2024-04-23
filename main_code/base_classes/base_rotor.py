@@ -32,13 +32,25 @@ class BaseRotorStep(ABC):
         self.new_pos = self.speed.get_new_position(dr)
 
         # Evaluate main parameter variation
-        dvr, dwt, dp, dh = self.get_variations(dr)
+        if self.options.sp_check:
 
-        # Update Speed
-        new_speed = Speed(self.new_pos)
-        wt_new = self.speed.wt + dwt
-        vr_new = self.speed.vr + dvr
-        new_speed.init_from_codes("wt", wt_new, "vr", vr_new)
+            dvr, dwt, dp, dh = self.get_variations(dr)
+
+            # Update Speed
+            new_speed = Speed(self.new_pos)
+            wt_new = self.speed.wt + dwt
+            vr_new = self.speed.vr + dvr
+            new_speed.init_from_codes("wt", wt_new, "vr", vr_new)
+
+        else:
+
+            dvr, dvt, dp, dh = self.get_variations(dr)
+
+            # Update Speed
+            new_speed = Speed(self.new_pos)
+            vt_new = self.speed.vt + dvt
+            vr_new = self.speed.vr + dvr
+            new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
 
         # Init a new step
         new_class = self.self_class()

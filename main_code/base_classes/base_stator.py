@@ -20,6 +20,8 @@ class BaseStator0D(ABC):
 
         out_pos = Position(self.geometry.r_int, 0)
         self.speed_out = Speed(out_pos)
+        self.liq_speed_out = Speed(out_pos)
+        self.gas_speed_out = Speed(out_pos)
 
         self.Ma_1 = 0.
         self.eta_stat = 0.
