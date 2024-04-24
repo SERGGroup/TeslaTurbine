@@ -157,7 +157,11 @@ class TPStatorMil(BaseStator0D):
 
         self.p_out = self.main_turbine.static_points[1].get_variable("P")
 
-        self.stator_mil_in.set_variable("T", self.main_turbine.T_in)
+        if self.main_turbine.points[0].get_variable("x") is None:
+            self.stator_mil_in.set_variable("T", self.main_turbine.T_in)
+        else:
+            self.stator_mil_in.set_variable("x", self.main_turbine.points[0].get_variable("x"))
+
         self.stator_mil_in.set_variable("P", self.main_turbine.P_in)
 
         self.isentropic_output.set_variable("p", self.p_out)
@@ -229,9 +233,6 @@ class TPStatorMil(BaseStator0D):
 
         self.phi_n = self.out_speed / self.v1_ss
 
-        self.stator_mil_in.copy_state_to(self.main_turbine.points[0])
-        self.stator_mil_in.copy_state_to(self.main_turbine.static_points[0])
-
         self.main_turbine.static_points[1].set_variable("h", h1)
         self.main_turbine.static_points[1].set_variable("p", self.p_out)
 
@@ -252,8 +253,13 @@ class TPStatorMil(BaseStator0D):
         self.speed_out = Speed(Position(self.geometry.r_int, 0))
         self.speed_out.init_from_codes("v", self.out_speed, "alpha", self.geometry.alpha_rad)
 
-        self.liq_speed_out = Speed(Position(self.geometry.r_int, 0))
+        # STATIC STATOR INLET CONDITIONS for Performance Evaluation
+        v0 = self.m_dot_s / (self.main_turbine.points[0].get_variable("rho") * 2 * np.pi * self.geometry.r_0 *
+                             self.main_turbine.geometry.H_s * self.geometry.Z_stat)
 
+        self.main_turbine.static_points[0].set_variable("h", self.main_turbine.points[0].get_variable("h") - (v0 / 2) ** 2 )
+        self.main_turbine.static_points[0].set_variable("s", self.main_turbine.points[0].get_variable("s"))
+        # self.liq_speed_out = Speed(Position(self.geometry.r_int, 0))
 
 
 class TPStatorStep(BaseStatorStep):

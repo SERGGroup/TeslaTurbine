@@ -31,7 +31,7 @@ tt0.points[0].set_variable("x", x_in)
 tt1 = BaseTeslaTurbine("R1234ze", curr_geometry, curr_options, stator=TPStatorMil, rotor=TPRotor)
 
 tt1.points[0].set_variable("P", P_in)
-tt1.points[0].set_variable("T", tt0.points[0].get_variable("T"))
+tt1.points[0].set_variable("x", tt0.points[0].get_variable("x"))
 
 tt1.P_in = tt0.points[0].get_variable("P")  # TODO This needs to be cleaned up too
 tt1.T_in = tt0.points[0].get_variable("T")

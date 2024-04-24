@@ -158,6 +158,16 @@ class TPRotor(BaseRotor):
         self.liq_phase.set_variable("x", 0)
         self.vap_phase.set_variable("x", 1)
 
+        __tmp_point = list()
+
+        for i in range(3):
+            __tmp_point.append(self.main_turbine.points[0].duplicate())
+
+        __tmp_point_liq1 = self.main_turbine.points[0].duplicate()
+        __tmp_point_vap1 = self.main_turbine.points[0].duplicate()
+        __tmp_point_liq2 = self.main_turbine.points[0].duplicate()
+        __tmp_point_vap2 = self.main_turbine.points[0].duplicate()
+
         if self.gap_losses_control:
 
             A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
@@ -167,61 +177,117 @@ class TPRotor(BaseRotor):
                 np.radians(self.main_turbine.geometry.alpha1)) - self.geometry.gap * np.tan(
                 np.radians(self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
                 np.radians(self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
-            ratio = A_in_sb / A_out_sb
+            A_ratio1 = A_in_sb / A_out_sb
 
             # Evaluation of Enlargement Pressure Losses
             h_0_star = self.main_turbine.points[1].get_variable("h")
             h_star = self.main_turbine.static_points[1].get_variable("h")
-            x_guess = self.main_turbine.static_points[1].get_variable("x")
-            epsilon = 1 / (1 + (1 - x_guess) / x_guess * (self.vap_phase.get_variable("rho") / self.liq_phase.get_variable("rho")) ** (2 / 3))
+            x_guess1 = self.main_turbine.static_points[1].get_variable("x")
+            epsilon = 1 / (1 + (1 - x_guess1) / x_guess1 * (self.vap_phase.get_variable("rho") / self.liq_phase.get_variable("rho")) ** (2 / 3))
 
-            rho_guess = ((1 - x_guess ** 2) / (self.liq_phase.get_variable("rho") * (1 - epsilon)) +
-                         x_guess ** 2 / (self.vap_phase.get_variable("rho") * epsilon)) ** (-1)
-
-            __tmp_point = list()
-
-            for i in range(2):
-                __tmp_point.append(self.main_turbine.points[0].duplicate())
-
-            __tmp_point_liq = self.main_turbine.points[0].duplicate()
-            __tmp_point_vap = self.main_turbine.points[0].duplicate()
+            rho_guess = ((1 - x_guess1 ** 2) / (self.liq_phase.get_variable("rho") * (1 - epsilon)) +
+                         x_guess1 ** 2 / (self.vap_phase.get_variable("rho") * epsilon)) ** (-1)
 
             n_it = 20
+            x_star = 0.
+            P_0_star = 0.
 
             for n in range(n_it):
 
-                __tmp_point[0].set_variable("x", x_guess)
+                __tmp_point[0].set_variable("x", x_guess1)
                 __tmp_point[0].set_variable("h", h_star)
 
                 P_g_star = __tmp_point[0].get_variable("P")
 
-                __tmp_point_liq.set_variable("P", P_g_star)
-                __tmp_point_vap.set_variable("P", P_g_star)
-                __tmp_point_vap.set_variable("x", 1)
-                __tmp_point_liq.set_variable("x", 0)
-                rho_ratio = __tmp_point_liq.get_variable("rho") / __tmp_point_vap.get_variable("rho")
-                rho_l = __tmp_point_liq.get_variable("rho")
-                rho_v = __tmp_point_vap.get_variable("rho")
+                __tmp_point_liq1.set_variable("P", P_g_star)
+                __tmp_point_vap1.set_variable("P", P_g_star)
+                __tmp_point_vap1.set_variable("x", 1)
+                __tmp_point_liq1.set_variable("x", 0)
+                rho_l = __tmp_point_liq1.get_variable("rho")
+                rho_v = __tmp_point_vap1.get_variable("rho")
 
-                rho_first_guess = ((1 - x_guess ** 2) / (rho_l * (1 - epsilon)) + x_guess ** 2 / (rho_v * epsilon)) ** (-1)
-                rho_h_star = (x_guess / rho_v + (1 - x_guess) / rho_l) ** (-1)
-                rho_sec_guess = ((1 - x_guess) ** 3 / (rho_l * (1 - epsilon)) ** 2 + x_guess ** 3 / (rho_v * epsilon) ** 2) ** (-1/2)
-                DeltaP_en = (self.main_turbine.stator.m_dot_s / (A_in_sb * self.main_turbine.stator.geometry.Z_stat)) ** 2 / (2 * rho_l) * (2 * rho_l * ratio *
-                                (ratio -1) / rho_first_guess - rho_h_star * rho_l * (ratio -1) / rho_sec_guess ** 2)
+                epsilon_star = 1 / (1 + (1 - x_guess1) / x_guess1 * (rho_v / rho_l) ** (2 / 3))
+
+                rho_first_guess = ((1 - x_guess1 ** 2) / (rho_l * (1 - epsilon_star)) + x_guess1 ** 2 / (rho_v * epsilon_star)) ** (-1)
+                rho_h_star = (x_guess1 / rho_v + (1 - x_guess1) / rho_l) ** (-1)
+                rho_sec_guess = ((1 - x_guess1) ** 3 / (rho_l * (1 - epsilon_star)) ** 2 + x_guess1 ** 3 / (rho_v * epsilon_star) ** 2) ** (-1/2)
+                G_en = self.main_turbine.stator.m_dot_s / (A_in_sb * self.main_turbine.stator.geometry.Z_stat)
+                DeltaP_en = G_en ** 2 / (2 * rho_l) * (2 * rho_l * A_ratio1 * (A_ratio1 - 1) / rho_first_guess - rho_h_star * rho_l * (A_ratio1 - 1) / rho_sec_guess ** 2)
                 P_0_star = self.main_turbine.points[1].get_variable("p") + DeltaP_en
 
                 __tmp_point[1].set_variable("P", P_0_star)
                 __tmp_point[1].set_variable("h", h_0_star)
 
+                # Overwriting Thermodynamic Intermediate Point
                 self.intermediate_point.set_variable("h", h_star)
                 self.intermediate_point.set_variable("s", __tmp_point[1].get_variable("s"))
 
                 x_star = self.intermediate_point.get_variable("x")
+                p_star = self.intermediate_point.get_variable("p")
 
-                if np.abs(x_star - x_guess) < 0.000001:
+                if np.abs(x_star - x_guess1) < 0.000001:
                     break
                 else:
-                    x_guess = x_star
+                    x_guess1 = x_star
+
+                n_out = n + 1
+
+            P_int = P_0_star
+            # Evaluation of Contraction Pressure Losses
+            A_in_imb = 2 * np.pi * self.geometry.r_out * (self.main_turbine.geometry.disc_thickness + self.geometry.b_channel)
+            A_out_imb = 2 * np.pi * self.geometry.r_out * self.geometry.b_channel
+            A_ratio2 = A_out_imb / A_in_imb
+            Cc = 1 - (1 - A_ratio2) / (2.08 * (1 - A_ratio2) + 0.5371)
+
+            x_guess2 = x_star
+            n2 = 0
+
+            self.main_turbine.points[2].set_variable("h", self.main_turbine.points[1].get_variable("h"))
+
+            for n in range(n_it):
+
+                __tmp_point[2].set_variable("x", x_guess2)
+                __tmp_point[2].set_variable("h", self.main_turbine.static_points[2].get_variable("h"))
+
+                P_g_2 = __tmp_point[2].get_variable("P")
+
+                __tmp_point_liq2.set_variable("P", P_g_2)
+                __tmp_point_vap2.set_variable("P", P_g_2)
+                __tmp_point_vap2.set_variable("x", 1)
+                __tmp_point_liq2.set_variable("x", 0)
+                rho_l2 = __tmp_point_liq2.get_variable("rho")
+                rho_v2 = __tmp_point_vap2.get_variable("rho")
+
+                epsilon_star2 = 1 / (1 + (1 - x_guess2) / x_guess2 * (rho_v2 / rho_l2) ** (2 / 3))
+
+                rho_first_guess2 = ((1 - x_guess2 ** 2) / (rho_l2 * (1 - epsilon_star2)) + x_guess2 ** 2 / (
+                            rho_v2 * epsilon_star2)) ** (-1)
+                rho_h_star2 = (x_guess2 / rho_v2 + (1 - x_guess2) / rho_l2) ** (-1)
+                rho_sec_guess2 = ((1 - x_guess2) ** 3 / (rho_l2 * (1 - epsilon_star2)) ** 2 + x_guess2 ** 3 / (
+                            rho_v2 * epsilon_star2) ** 2) ** (-1 / 2)
+                G_con = self.m_dot_ch / A_out_imb
+                DeltaP_con = G_con ** 2 * (rho_h_star2 / 2 * ((1 / (Cc * rho_sec_guess2) ** 2) - (A_ratio2 /
+                                                                rho_sec_guess2) ** 2) + (1 - Cc) / rho_first_guess2) # RIVEDERE
+
+                self.main_turbine.points[2].set_variable("P", P_int - DeltaP_con)
+                self.main_turbine.points[2].set_variable("h", self.main_turbine.points[1].get_variable("h"))
+
+                self.main_turbine.static_points[2].set_variable("h",
+                                                                self.main_turbine.static_points[1].get_variable("h"))
+                self.main_turbine.static_points[2].set_variable("s", self.main_turbine.points[2].get_variable("s"))
+
+                x2 = self.main_turbine.static_points[2].get_variable("x")
+                p2 = self.main_turbine.static_points[2].get_variable("P")
+                if np.abs(x2 - x_guess2) < 0.000001:
+                    break
+                else:
+                    x_guess2 = x2
+
+            vr_R = self.m_dot_ch / (2 * np.pi * self.geometry.b_channel * (self.geometry.r_out) * __tmp_point[1].get_variable("rho"))
+            v_R = self.main_turbine.stator.speed_out.v
+            self.rotor_inlet_speed.init_from_codes("v", v_R, "v_r", vr_R)
+
+            return self.rotor_inlet_speed
 
         else:
 

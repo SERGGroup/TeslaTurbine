@@ -190,9 +190,10 @@ class StatorGeometry:
 class BaseTeslaGeometry:
 
     d_main = 0.2
-    H_s = 0.6
+    H_s = 0.
     throat_width = 0.0004934
     alpha1 = 85
+    disc_thickness = 0.0008
 
     def __init__(
 
@@ -204,3 +205,5 @@ class BaseTeslaGeometry:
 
         self.stator = stator_geometry(self)
         self.rotor = rotor_geometry(self)
+
+        self.H_s = (self.rotor.n_discs - 1) * self.disc_thickness + self.rotor.n_discs * self.rotor.b_channel
