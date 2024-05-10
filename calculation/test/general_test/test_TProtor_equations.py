@@ -7,30 +7,30 @@ from main_code.base_classes import BaseTeslaTurbine
 
 curr_geometry = TPTeslaGeometry()
 curr_geometry.stator.d_int = 0.5    # [m]
-curr_geometry.stator.H_s = 0.0005   # [m]
-# curr_geometry.H_s = 0.0005          # [m]  TODO This needs to be cleaned up
 curr_geometry.throat_width = 0.003  # [m]
 curr_geometry.rotor.n_channels = 1  # [-]
 curr_geometry.rotor.b_channel = 0.0029
 curr_geometry.rotor.roughness = 0.0000005
 
 curr_options = TPTeslaOptions()
-curr_options.stator.iterate_phi = False
+# curr_options.stator.iterate_phi = False
 curr_options.rotor.profile_rotor = True
 curr_options.rotor.sp_check = False
 curr_options.rotor.tp_epsilon_model = "sarti"
 
 
-P_in = 997233  # [Pa]
-x_in = 0        # [-]
-P_out = 652161  # [Pa]
+P_in = 997233       # [Pa]
+# x_in = 0            # [-]
+P_out = 427308      # [Pa]
+T_in = 323.15          # [K]
 
 tt0 = BaseTeslaTurbine("R1234ze", curr_geometry, curr_options, stator=TPStatorMil, rotor=TPRotor)
 
 tt0.points[0].set_variable("P", P_in)
-tt0.points[0].set_variable("x", x_in)
+# tt0.points[0].set_variable("x", x_in)
+tt0.points[0].set_variable("T", T_in)
+
 tt0.static_points[1].set_variable("P", P_out)
-tt0.P_out = P_out
 tt0.P_in = P_in
 tt0.stator.stator_eff = 0.81
 
@@ -42,6 +42,10 @@ tt0.stator.solve()
 
 # %%------------   ROTOR SOLVE                            -----------------------------------------------------------> #
 tt0.rotor.solve()
+
+# tt0.P_in = P_in
+# tt0.P_out = P_out
+# tt0.iterate_pressure()
 rotor_array = tt0.rotor.get_rotor_array()
 tt0.evaluate_performances()
 

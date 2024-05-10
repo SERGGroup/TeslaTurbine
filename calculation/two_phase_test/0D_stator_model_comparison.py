@@ -77,3 +77,26 @@ plt.grid()
 plt.legend(["MILAZZO Model", "OLD Model"])
 
 plt.show()
+
+
+# %%------------   METASTABILITY                              -------------------------------------------------------> #
+tp = tt1.points[0].duplicate()
+
+tp.set_variable("T", T_in)
+tp.set_variable("Q", 0)
+rho_liq = tp.get_variable("rho")
+
+tp.set_variable("T", T_in)
+tp.set_variable("Q", 1)
+rho_vap = tp.get_variable("rho")
+
+perc = 0.001
+tp_metastb = tp.duplicate()
+tp_metastb.metastability = "liquid"
+tp_metastb.set_variable("rho", rho_liq * (1-perc) + rho_vap * perc)
+tp_metastb.set_variable("T", T_in)
+
+tp.set_variable("rho", rho_liq * (1 - perc) + rho_vap * perc)
+tp.set_variable("T", T_in)
+print(tp.get_variable("P"))
+print(tp_metastb.get_variable("P"))

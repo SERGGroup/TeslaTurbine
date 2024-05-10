@@ -9,7 +9,7 @@ class BaseTeslaTurbine:
     def __init__(
 
             self, fluid, geometry: BaseTeslaGeometry,
-            options: BaseTeslaOptions, stator: type(BaseStator1D),
+            options: BaseTeslaOptions, stator: type(BaseStator0D),
             rotor: type(BaseRotor)
 
     ):
@@ -71,6 +71,17 @@ class BaseTeslaTurbine:
 
         self.static_points[1].set_variable("P", P_1s)
         self.stator.solve()
+        self.rotor.solve()
+
+    def fix_rotor_inlet_condition(self, P_1s, T_1s, alpha, v):
+
+        self.static_points[1].set_variable("P", P_1s)
+        self.stator.solve()
+
+        self.stator.speed_out.init_from_codes("alpha", alpha, "v", v)
+        self.static_points[1].set_variable("P", P_1s)
+        self.static_points[1].set_variable("T", T_1s)
+
         self.rotor.solve()
 
     def evaluate_performances(self):

@@ -11,6 +11,7 @@ class StatorOptions:
 
     iterate_phi = True
     n_phi_iteration = 150
+    metastability_check = False
 
     profile_stator = True
     n_stator = 101

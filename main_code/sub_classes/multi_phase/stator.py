@@ -157,8 +157,8 @@ class TPStatorMil(BaseStator0D):
 
         self.p_out = self.main_turbine.static_points[1].get_variable("P")
 
-        if self.main_turbine.points[0].get_variable("x") is None:
-            self.stator_mil_in.set_variable("T", self.main_turbine.T_in)
+        if self.main_turbine.points[0].get_variable("x") < 0 or self.main_turbine.points[0].get_variable("x") > 1:
+            self.stator_mil_in.set_variable("T", self.main_turbine.points[0].get_variable("T"))
         else:
             self.stator_mil_in.set_variable("x", self.main_turbine.points[0].get_variable("x"))
 
@@ -178,7 +178,7 @@ class TPStatorMil(BaseStator0D):
 
         self.initialization()
 
-        Hh = np.linspace(self.stator_mil_in.get_variable("h"), self.stator_mil_out.get_variable("h"), n)
+        # Hh = np.linspace(self.stator_mil_in.get_variable("h"), self.stator_mil_out.get_variable("h"), n)
         Ph = np.linspace(self.stator_mil_in.get_variable("p") - 100, self.stator_mil_out.get_variable("p"), n)
         Ss = np.linspace(self.stator_mil_in.get_variable("s"), self.stator_mil_in.get_variable("s"), n)
 
@@ -198,7 +198,11 @@ class TPStatorMil(BaseStator0D):
         for i in range(n):
             int_points.append(self.stator_mil_in.duplicate())
 
-        for i in range(n):
+            if self.main_turbine.options.stator.metastability_check is True:
+                int_points[i].metastability = "liq"
+            else:
+                int_points[i].metastability = "Equilibrium"
+
             int_points[i].set_variable("P", Ph[i])
             int_points[i].set_variable("s", Ss[i])
 
