@@ -4,10 +4,13 @@ import numpy as np
 class RotorGeometry:
 
     d_ratio = 3
-    stator_gap = 0.0001
-    b_channel = 0.0001
+    b_channel = 0.00007
     roughness = 0.000001
     n_channels = 50
+    n_packs = 50
+    n_discs = 2
+    gap = 0.0004
+    alpha_1PS = 78.503
 
     def __init__(self, main_geom):
 
@@ -15,11 +18,11 @@ class RotorGeometry:
 
     @property
     def d_out(self):
-        return self.main_class.d_main - 2 * self.stator_gap
+        return self.main_class.d_main - 2 * self.gap
 
     @d_out.setter
     def d_out(self, d_out_in):
-        self.main_class.d_main = d_out_in + 2 * self.stator_gap
+        self.main_class.d_main = d_out_in + 2 * self.gap
 
     @property
     def r_out(self):
@@ -44,12 +47,8 @@ class StatorGeometry:
 
     d_ratio = 1.25
     Z_stat = 4
-    H_s = 0.6
     N_s = 100
-
-    # Those values need to be specified ONLY if working with a 0D Stator version
-    throat_width = 0.003
-    alpha1 = 85
+    gap = 0.0004
 
     # Parameters for Stator Profiling
     t_u = 0.12      # [mm]
@@ -146,6 +145,7 @@ class StatorGeometry:
         return dup, dbottom, dmidline, m, m_perp
 
     def geometric_parameters(self, X_ss, Y_ss, Y_ps, X_ps, m, n):
+
         A_th = np.zeros(n)
         A_eff = np.zeros(n)
 
@@ -184,12 +184,16 @@ class StatorGeometry:
     @property
     def alpha_rad(self):
 
-        return self.alpha1 * np.pi / 180
+        return self.main_class.alpha1 * np.pi / 180
 
 
 class BaseTeslaGeometry:
 
-    d_main = 0.55
+    d_main = 0.2
+    H_s = 0.
+    throat_width = 0.0004934
+    alpha1 = 85
+    disc_thickness = 0.0008
 
     def __init__(
 
@@ -201,3 +205,5 @@ class BaseTeslaGeometry:
 
         self.stator = stator_geometry(self)
         self.rotor = rotor_geometry(self)
+
+        self.H_s = (self.rotor.n_discs - 1) * self.disc_thickness + self.rotor.n_discs * self.rotor.b_channel

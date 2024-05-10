@@ -170,28 +170,28 @@ class Speed:
             i = input_codes.index("v")
             self.__v = input_values[i]
 
-            if "v_t" in input_codes or "w_t" in input_codes:
+            if "vt" in input_codes or "wt" in input_codes:
 
-                if "w_t" in input_codes:
+                if "wt" in input_codes:
 
-                    i = input_codes.index("w_t")
+                    i = input_codes.index("wt")
                     self.__wt = input_values[i]
                     self.__vt = self.__wt + self.pos.u
 
                 else:
 
-                    i = input_codes.index("v_t")
+                    i = input_codes.index("vt")
                     self.__vt = input_values[i]
 
-            elif "v_r" in input_codes or "w_r" in input_codes:
+            elif "vr" in input_codes or "wr" in input_codes:
 
-                if "w_r" in input_codes:
+                if "wr" in input_codes:
 
-                    i = input_codes.index("w_r")
+                    i = input_codes.index("wr")
 
                 else:
 
-                    i = input_codes.index("v_r")
+                    i = input_codes.index("vr")
 
                 self.__vr = input_values[i]
                 self.__wr = self.__vr
@@ -211,29 +211,29 @@ class Speed:
                     self.__alpha = input_values[i]
                     self.__vt = self.__v * np.sin(self.__alpha)
 
-        elif "v_t" in input_codes or "w_t" in input_codes:
+        elif "vt" in input_codes or "wt" in input_codes:
 
-            if "v_t" in input_codes:
+            if "vt" in input_codes:
 
-                i = input_codes.index("v_t")
+                i = input_codes.index("vt")
                 self.__vt = input_values[i]
                 self.__wt = self.__vt - self.pos.u
 
             else:
 
-                i = input_codes.index("v_t")
+                i = input_codes.index("wt")
                 self.__wt = input_values[i]
                 self.__vt = self.__wt + self.pos.u
 
-            if "v_r" in input_codes or "w_r" in input_codes:
+            if "vr" in input_codes or "wr" in input_codes:
 
-                if "w_r" in input_codes:
+                if "wr" in input_codes:
 
-                    i = input_codes.index("w_r")
+                    i = input_codes.index("wr")
 
                 else:
 
-                    i = input_codes.index("v_r")
+                    i = input_codes.index("vr")
 
                 self.__vr = input_values[i]
                 self.__wr = self.__vr
@@ -262,15 +262,15 @@ class Speed:
                     self.__vr = self.__wr
                     self.__v = np.sqrt(self.__vt ** 2 + self.__vr ** 2)
 
-        elif "v_r" in input_codes or "w_r" in input_codes:
+        elif "vr" in input_codes or "wr" in input_codes:
 
-            if "w_r" in input_codes:
+            if "wr" in input_codes:
 
-                i = input_codes.index("w_r")
+                i = input_codes.index("wr")
 
             else:
 
-                i = input_codes.index("v_r")
+                i = input_codes.index("vr")
 
             self.__vr = input_values[i]
             self.__wr = self.__vr
@@ -321,8 +321,13 @@ class Speed:
         self.__wt = self.__vt - self.pos.u
         self.__w = np.sqrt(self.__wr ** 2 + self.__wt ** 2)
 
-        self.__beta = np.arcsin(self.__wt / self.w)
-        self.__alpha = np.arcsin(self.__vt / self.v)
+        if not self.w == 0:
+
+            self.__beta = np.arcsin(self.__wt / self.w)
+
+        if not self.v == 0:
+
+            self.__alpha = np.arcsin(self.__vt / self.v)
 
     @staticmethod
     def __reformat_code(input_code: str):
@@ -341,12 +346,12 @@ class Speed:
     @staticmethod
     def __code_is_radial(code):
 
-        return "_r" in code
+        return "r" in code
 
     @staticmethod
     def __code_is_tangential(code):
 
-        return "_t" in code
+        return "t" in code
 
     def __codes_are_independent(self, code, other_code):
 

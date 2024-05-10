@@ -24,7 +24,7 @@ def void_fraction_handler(original_class):
     This is done by adding the following elements to the class:
 
         - an "__epsilon" variable: stores the calculated void fraction (by default is None).
-        - an "evaluate_epsilon" method: that contains the epsilon evaluation procedure.
+        - an "__evaluate_epsilon" method: that contains the epsilon evaluation procedure.
         - an "epsilon" property: can be used to retrieve the calculated void fraction. If "__epsilon" is None then
         evaluate it by calling the "evaluate_epsilon()" method.
         - a "reset_epsilon" method: reset "__epsilon" to None so that, once the "epsilon" property is called again,

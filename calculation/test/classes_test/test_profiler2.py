@@ -2,19 +2,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from main_code.base_classes.support.geometry import BaseTeslaGeometry
+from main_code.base_classes.support.options import StatorOptions
 
 
 # %%------------   DATA
 
-n = 100
-r_0 = 125
-r_1 = 100
-ax = np.zeros(n)
-
-rad_axis = np.linspace(r_0, r_1, n)
-
+options = StatorOptions()
 geom = BaseTeslaGeometry()
-x_ss, y_ss, y_ps, x_ps, m, alpha_out = geom.stator.get_coordinates(n, r_0, r_1, ax)
+
+geom.d_main = 0.2
+
+rad_axis = np.linspace(geom.d_main / 2 * geom.stator.d_ratio * 1000, geom.d_main / 2 * 1000, options.n_stator)
+x_ss, y_ss, y_ps, x_ps, m, alpha, alpha_vert, dl = geom.stator.get_coordinates(options.n_stator)
+
+chord = np.sum(dl)
 
 theta = np.linspace(0, 18, 100)
 x_min = list()
@@ -23,13 +24,15 @@ x_max = list()
 y_max = list()
 
 for theta in theta:
-    x_min.append(r_0 * np.sin(theta * np.pi / 180))
-    y_min.append(r_0 * np.cos(theta * np.pi / 180))
-    x_max.append(r_1 * np.sin(theta * np.pi / 180))
-    y_max.append(r_1 * np.cos(theta * np.pi / 180))
+    x_min.append(geom.d_main / 2 * 1000 * np.sin(theta * np.pi / 180))
+    y_min.append(geom.d_main / 2 * 1000 * np.cos(theta * np.pi / 180))
+    x_max.append(geom.d_main / 2 * 1000 * geom.stator.d_ratio * np.sin(theta * np.pi / 180))
+    y_max.append(geom.d_main / 2 * 1000 * geom.stator.d_ratio * np.cos(theta * np.pi / 180))
 
-A_th, A_eff, throat_width = geom.stator.geometric_parameters(x_ss, y_ss, y_ps, x_ps, m, n)
+A_th, A_eff = geom.stator.get_area(x_ss, y_ss, y_ps, x_ps, m, options.n_stator)
 
+throat = geom.stator.throat_width
+alpha_out = geom.stator.alpha1
 
 # %%------------   PLOT
 
