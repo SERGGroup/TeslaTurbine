@@ -196,6 +196,7 @@ class TPStatorMil(BaseStator0D):
         int_points = list()
 
         for i in range(n):
+
             int_points.append(self.stator_mil_in.duplicate())
 
             if self.main_turbine.options.stator.metastability_check is True:

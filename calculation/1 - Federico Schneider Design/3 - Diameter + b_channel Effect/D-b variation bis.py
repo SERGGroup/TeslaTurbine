@@ -9,18 +9,18 @@ import matplotlib.pyplot as plt
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 5
+n_setpoints = 3
 D_ref = 0.35     # [m]
 b_ref = 0.001   # [m]
 D_turb_list = np.linspace(0.55, 1.45, n_setpoints) * D_ref
-b_channel_list = np.linspace(0.5, 3, n_setpoints) * b_ref
+b_channel_list = np.linspace(0.3, 1, n_setpoints) * b_ref
 D_turb, b_channel = np.meshgrid(D_turb_list, b_channel_list)
 
 curr_options = TPTeslaOptions()
 curr_options.rotor.profile_rotor = True
 curr_options.rotor.sp_check = False
 curr_options.rotor.tp_epsilon_model = "sarti"
-curr_options.stator.metastability_check = False
+curr_options.stator.metastability_check = True
 
 P_in = 997233         # [Pa]
 x_in = 0              # [-]
