@@ -14,7 +14,6 @@ class BaseRotorStep(ABC):
         self.thermo_point = self.main_rotor.input_point.duplicate()
         self.geometry = self.main_rotor.geometry
         self.__omega = 0.
-        self.rothalpy = 0.
 
     @property
     def pos(self):
@@ -25,6 +24,18 @@ class BaseRotorStep(ABC):
     def m_dot(self):
 
         return self.main_rotor.m_dot_ch
+
+    @property
+    def total_thermo_point(self):
+
+        total_thermo_point = self.thermo_point.duplicate()
+        h_0 = self.main_rotor.rothalpy + self.speed.u * self.speed.vt
+        p_0 = self.thermo_point.get_variable("P") + 1/2 * self.thermo_point.get_variable("rho") * self.speed.v ** 2
+
+        total_thermo_point.set_variable("P", p_0)
+        total_thermo_point.set_variable("H", h_0)
+
+        return total_thermo_point
 
     def get_new_step(self, dr):
 
@@ -57,7 +68,7 @@ class BaseRotorStep(ABC):
         new_step = new_class(main_rotor=self.main_rotor, speed=new_speed)
 
         # Update Enthalpy through Rothalpy Conservation
-        h_new = self.main_rotor.rothalpy - (new_speed.w ** 2) / 2 + (new_speed.u ** 2) / 2
+        h_new = self.main_rotor.rothalpy + new_speed.u * new_speed.vt - 1/2 * new_speed.v ** 2
 
         # Update Thermodynamic Point
         p_new = self.thermo_point.get_variable("P") + dp
@@ -115,8 +126,10 @@ class BaseRotor(ABC):
         # TODO: Change to static pressure model
         self.first_speed.equal_absolute_speed_to(self.rotor_inlet_speed)
 
-        self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (self.first_speed.w ** 2) / 2 -
-                         (self.first_speed.u ** 2) / 2)
+        # self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (self.first_speed.w ** 2) / 2 -
+        #                  (self.first_speed.u ** 2) / 2)
+
+        self.rothalpy = self.main_turbine.points[2].get_variable("h") - self.first_speed.vt * self.first_speed.u
 
         first_step = self.rotor_step_cls(self, self.first_speed)
         new_step = first_step
@@ -143,7 +156,7 @@ class BaseRotor(ABC):
             self.rotor_points.append(new_step)
 
         self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.static_points[3])
-        self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.points[3])
+        self.rotor_points[-1].total_thermo_point.copy_state_to(self.main_turbine.points[3])
 
     @abstractmethod
     def evaluate_gap_losses(self):

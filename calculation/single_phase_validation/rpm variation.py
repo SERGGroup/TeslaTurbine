@@ -28,7 +28,7 @@ tt.points[0].set_variable("T", T_in)
 d_main = 0.2
 tt.geometry.H_s = 0.00094
 tt.geometry.alpha1 = 85
-rpm = np.linspace(4000, 7000, 3000)
+rpm = np.linspace(4000, 7000, 10)
 
 # Design Parameters
 tt.geometry.rotor.d_ratio = 2.5
@@ -37,7 +37,7 @@ tt.geometry.throat_width = 0.0004934
 tt.rotor.dv_perc = 0.1315
 tt.geometry.rotor.n_channels = 2
 
-output_array = np.empty((len(rpm), 8))
+output_array = np.empty((len(rpm), 9))
 
 
 # %%------------             CALCULATIONS                -----------------------------------------------------------> #
@@ -51,13 +51,21 @@ for i in tqdm(range(len(rpm))):
 
     output_array[i, 0] = rpm[i]
     output_array[i, 1] = tt.Eta_tesla_ss
-    output_array[i, 2] = tt.work
-    output_array[i, 3] = tt.power
-    output_array[i, 4] = tt.rotor.rpm
-    output_array[i, 5] = tt.stator.m_dot_s
-    output_array[i, 6] = tt.points[-1].get_variable("P")
-    output_array[i, 7] = tt.points[-1].get_variable("T")
+    output_array[i, 2] = tt.Eta_tesla_ss_dh
+    output_array[i, 3] = tt.work
+    output_array[i, 4] = tt.power
+    output_array[i, 5] = tt.rotor.rpm
+    output_array[i, 6] = tt.stator.m_dot_s
+    output_array[i, 7] = tt.points[-1].get_variable("P")
+    output_array[i, 8] = tt.points[-1].get_variable("T")
 
+# %%------------   PLOT RESULTS                         -------------------------------------------------------------> #
+fig2, ax2 = plt.subplots()
+ax2.plot(output_array[:, 1], output_array[:, 2], c='darkblue', label='No-Meta')
+plt.legend()
+plt.grid()
+
+plt.show()
 
 # %%------------             IMPORT EES RESULTS                ------------------------------------------------------> #
 py_df = pd.DataFrame(output_array, columns=['rpm', 'Eta_Tesla_ss', 'Work', 'Power', 'RPM', 'm_dot', "P_out", "T_out"])

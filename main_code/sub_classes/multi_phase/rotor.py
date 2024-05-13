@@ -38,14 +38,13 @@ class TPRotorStep(BaseRotorStep):
 
         vr_new = self.m_dot /(2 * np.pi * self.geometry.b_channel * r_new * rho)
 
+        #
+        # vtFG = vt - dr * (vt / r_new - self.phi_liq * self.dpdl_liq / (rho * vr_new) * np.sin(self.speed.beta))
+        # vt_c = (vt + vtFG) / 2
+        #
+
         dvr = vr_new - self.speed.vr
-
-        vtFG = vt - dr * (- (vt / r_new) - (self.phi_liq * self.dpdl_liq * (1 / (rho * (- vr_new)))) *
-                          (vt - self.pos.omega * r_new) / (((vt - self.pos.omega * r_new) ** 2 + (- vr_new) ** 2) ** 0.5))
-        vt_c = (vt + vtFG) / 2
-        dvt = - dr * (- (vt_c / r_new) - (self.phi_liq * self.dpdl_liq * (1 / (rho * (- vr_new)))) *
-                      (np.sin(self.speed.beta)))
-
+        dvt = dr * (self.speed.vt / r_new - self.phi_liq * self.dpdl_liq / (rho * vr_new) * np.sin(self.speed.beta))
         dP = - dr * ((rho * (vr ** 2 + vt ** 2) / r_new) - (self.phi_liq * self.dpdl_liq *
                 np.cos(self.speed.beta)))
 
@@ -63,8 +62,7 @@ class TPRotorStep(BaseRotorStep):
         m_g = self.m_dot * x
         m_l = self.m_dot * (1 - x)
 
-        vr_l = m_l / (self.liq_phase.get_variable("rho") * (1 - self.epsilon) * 2 * np.pi * self.geometry.b_channel
-                      * self.pos.r)
+        vr_l = m_l / (self.liq_phase.get_variable("rho") * (1 - self.epsilon) * 2 * np.pi * self.geometry.b_channel * self.pos.r)
         vr_g = m_g / (self.vap_phase.get_variable("rho") * self.epsilon * 2 * np.pi * self.geometry.b_channel * self.pos.r)
 
         self.liq_speed.init_from_codes("vr", vr_l, "beta", self.speed.beta)
@@ -152,8 +150,8 @@ class TPRotor(BaseRotor):
 
         """
 
-        self.liq_phase.set_variable("P", self.main_turbine.points[1].get_variable("P"))
-        self.vap_phase.set_variable("P", self.main_turbine.points[1].get_variable("P"))
+        self.liq_phase.set_variable("P", self.main_turbine.static_points[1].get_variable("P"))
+        self.vap_phase.set_variable("P", self.main_turbine.static_points[1].get_variable("P"))
 
         self.liq_phase.set_variable("x", 0)
         self.vap_phase.set_variable("x", 1)
