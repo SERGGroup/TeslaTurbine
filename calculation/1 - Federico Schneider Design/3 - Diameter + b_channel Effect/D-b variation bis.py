@@ -73,7 +73,7 @@ for i in tqdm(range(n_setpoints)):
             new_turbine.iterate_pressure()
             new_turbine.evaluate_performances()
 
-            Eta[p + p_0] = new_turbine.Eta_tesla_ss
+            Eta[p + p_0] = new_turbine.eta_tt
             Power[p + p_0] = new_turbine.power
 
             if Eta[p + p_0] > max_efficiency or p == 0:
@@ -85,14 +85,14 @@ for i in tqdm(range(n_setpoints)):
                 max_power = Power[p + p_0]
 
             output_array[p, 0] = dv_perc[p]
-            output_array[p, 1] = new_turbine.Eta_tesla_ss
+            output_array[p, 1] = new_turbine.eta_tt
             output_array[p, 2] = new_turbine.work
             output_array[p, 3] = new_turbine.power
             output_array[p, 4] = new_turbine.rotor.rpm
             output_array[p, 5] = new_turbine.stator.m_dot_s
             output_array[p, 6] = new_turbine.points[1].get_variable("rho")
             output_array[p, 7] = new_turbine.static_points[1].get_variable("p")
-            output_array[p, 8] = new_turbine.stator.out_speed
+            output_array[p, 8] = new_turbine.stator.speed_out.v
 
         output_array_list.append(output_array)
         rotor_array_max_efficiency_list.append(rotor_array_max_efficiency)

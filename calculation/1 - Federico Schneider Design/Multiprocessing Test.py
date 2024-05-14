@@ -87,10 +87,10 @@ def evaluate(i, j):
             dv_perc = x[0]
             tesla_turbine.rotor.dv_perc = dv_perc
             turbine_calculation(i=i, j=j, k=k)
-            print("{}-{}".format(dv_perc, tesla_turbine.Eta_tesla_ss))
+            print("{}-{}".format(dv_perc, tesla_turbine.eta_tt))
             if opt_value[0] == 0:
 
-                return -tesla_turbine.Eta_tesla_ss
+                return -tesla_turbine.eta_tt
 
             elif opt_value[0] == 1:
 

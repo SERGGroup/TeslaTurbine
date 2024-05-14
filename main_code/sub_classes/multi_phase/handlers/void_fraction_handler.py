@@ -1,5 +1,6 @@
 from main_code.utils.general_option_modifier import append_general_option_modification
 import numpy as np
+import warnings
 
 __ACCEPTABLE_VOID_FRACTION_MODELS = ["chisholm", "sarti"]
 __DEFAULT_VOID_FRACTION_MODEL = "chisholm"
@@ -33,7 +34,7 @@ def void_fraction_handler(original_class):
     Inside the class there should be:
 
         - a "self.m_dot" variable: A float containing the flow rate of the fluid
-        - a "self.thermo_point" variable: A REFPROP_connector "ThermodynamicPoint" containing the thermodynamic state.
+        - a "self.static_point" variable: A REFPROP_connector "ThermodynamicPoint" containing the thermodynamic state.
         - a "self.liq_phase" ad a "self.vap_phase" variable: two REFPROP_connector "ThermodynamicPoint" containing the
         liquid and vapor properties of the fluid.
 
@@ -56,9 +57,29 @@ def void_fraction_handler(original_class):
 
     def evaluate_epsilon(self):
 
-        x = self.thermo_point.get_variable("x")
+        x = self.static_point.get_variable("x")
         rho_liq = self.liq_phase.get_variable("rho")
         rho_vap = self.vap_phase.get_variable("rho")
+
+        if not (0 <= x <= 1):
+
+            rho_curr = self.static_point.get_variable("rho")
+            warnings.warn("The fluid is not multiphase!\nP={}Pa, T={}K, rho={}kg/m3".format(
+
+                self.static_point.get_variable("P"),
+                self.static_point.get_variable("T"),
+                self.static_point.get_variable("rho"),
+
+            ))
+
+            if rho_curr > (rho_liq + rho_vap) / 2:
+
+                x = 1
+
+            else:
+
+                x = 0
+
         rho_ratio = rho_vap / rho_liq
         if getattr(self.options, __OPTION_NAME) == "sarti":
 

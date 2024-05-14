@@ -1,17 +1,17 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
-import numpy as np
 from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometry, SPTeslaOptions
 from main_code.base_classes import BaseTeslaTurbine
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
+import numpy as np
+
 
 # %%------------       INPUT DATA                         -----------------------------------------------------------> #
 curr_geometry = SPTeslaGeometry()
 curr_options = SPTeslaOptions()
 curr_options.stator.iterate_phi = True
 curr_geometry.stator.d_int = 0.2        # [m]
-
 
 tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=SPStator, rotor=SPRotor)
 
@@ -37,6 +37,7 @@ tt.geometry.rotor.n_channels = 2
 
 output_array = np.empty((len(P_out), 6))
 
+
 # %%------------             CALCULATIONS                -----------------------------------------------------------> #
 for i in tqdm(range(len(P_out))):
 
@@ -47,13 +48,13 @@ for i in tqdm(range(len(P_out))):
     tt.evaluate_performances()
 
     output_array[i, 0] = P_out[i]
-    output_array[i, 1] = tt.Eta_tesla_ss
+    output_array[i, 1] = tt.eta_tt
     output_array[i, 2] = tt.work
     output_array[i, 3] = tt.power
     output_array[i, 4] = tt.rotor.rpm
     output_array[i, 5] = tt.stator.m_dot_s
 
-# %%------------             PLOT RESULTS                -----------------------------------------------------------> #
 
+# %%------------             PLOT RESULTS                -----------------------------------------------------------> #
 df = pd.DataFrame(output_array)
 df.to_excel(excel_writer="test.xlsx")

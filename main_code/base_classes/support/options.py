@@ -21,6 +21,8 @@ class StatorOptions:
 
 class BaseTeslaOptions:
 
+    general_bisection_limit = 20
+
     def __init__(
 
             self, rotor_options: type(RotorOptions),

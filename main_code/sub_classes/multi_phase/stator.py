@@ -149,7 +149,6 @@ class TPStatorMil(BaseStator0D):
 
         self.phi_n = 0.
         self.v1_ss = 0.
-        self.out_speed = 0.
         self.x_in = 0.
         self.x_out = 0.
 
@@ -226,27 +225,22 @@ class TPStatorMil(BaseStator0D):
             m_dot_arr[i] = m_dot_s_in
 
         h_out = self.stator_mil_in.get_variable("h") - (v_sound ** 2) / 2
-        v = v_sound
-
         self.m_dot_s = self.main_turbine.geometry.stator.Z_stat * A_throat * rhov_throat
 
         return v_sound, h_out
 
     def solve(self):
 
-        self.out_speed, h1 = self.sonic_cond_evaluation(self.n)
+        out_speed, h1 = self.sonic_cond_evaluation(self.n)
 
-        self.phi_n = self.out_speed / self.v1_ss
+        self.phi_n = out_speed / self.v1_ss
 
         self.main_turbine.static_points[1].set_variable("h", h1)
         self.main_turbine.static_points[1].set_variable("p", self.p_out)
+        total_point = self.main_turbine.static_points[1].get_stagnation_point(out_speed)
+        total_point.copy_state_to(self.main_turbine.points[1])
 
-        self.speed_out.init_from_codes("v", self.out_speed, "alpha", self.geometry.alpha_rad)
-
-        self.main_turbine.points[1].set_variable("h", self.main_turbine.points[0].get_variable("h"))
-        self.main_turbine.points[1].set_variable("p", self.main_turbine.static_points[1].get_variable("p") + 0.5 *
-                                                 self.main_turbine.static_points[1].get_variable("rho") * self.out_speed
-                                                 ** 2)
+        self.speed_out.init_from_codes("v", out_speed, "alpha", self.geometry.alpha_rad)
 
         if self.main_turbine.points[0].get_variable("x") > 0:
             self.x_in = self.main_turbine.points[0].get_variable("x")
@@ -256,15 +250,12 @@ class TPStatorMil(BaseStator0D):
 
         # SPEED CALCULATIONS for Inlet Rotor Requirements
         self.speed_out = Speed(Position(self.geometry.r_int, 0))
-        self.speed_out.init_from_codes("v", self.out_speed, "alpha", self.geometry.alpha_rad)
+        self.speed_out.init_from_codes("v", out_speed, "alpha", self.geometry.alpha_rad)
 
         # STATIC STATOR INLET CONDITIONS for Performance Evaluation
-        v0 = self.m_dot_s / (self.main_turbine.points[0].get_variable("rho") * 2 * np.pi * self.geometry.r_0 *
-                             self.main_turbine.geometry.H_s * self.geometry.Z_stat)
-
-        self.main_turbine.static_points[0].set_variable("h", self.main_turbine.points[0].get_variable("h") - (v0 / 2) ** 2 )
-        self.main_turbine.static_points[0].set_variable("s", self.main_turbine.points[0].get_variable("s"))
-        # self.liq_speed_out = Speed(Position(self.geometry.r_int, 0))
+        v0 = self.m_dot_s / (self.main_turbine.points[0].get_variable("rho") * 2 * np.pi * self.geometry.r_0 * self.main_turbine.geometry.H_s * self.geometry.Z_stat)
+        static_point = self.main_turbine.points[0].get_static_point(v0)
+        static_point.copy_state_to(self.main_turbine.static_points[0])
 
 
 class TPStatorStep(BaseStatorStep):
@@ -299,6 +290,7 @@ class TPStator1D(BaseStator1D):
 
         self.static_input_point = self.main_turbine.static_points[0]
         self.static_output_point = self.main_turbine.static_points[1]
+
         self.p_out = self.static_output_point.get_variable("P")
 
         self.geometry = self.main_turbine.geometry.stator
@@ -367,11 +359,8 @@ class TPStator1D(BaseStator1D):
 
         rho_try = self.input_point.get_variable("rho")
         first_speed = self.m_dot_s / (self.input_point.get_variable("rho") * A_eff[0])
-
-        h0 = self.input_point.get_variable("h") - 0.5 * first_speed ** 2
-        s0 = self.input_point.get_variable("s")
-        self.main_turbine.static_points[0].set_variable("h", h0)
-        self.main_turbine.static_points[0].set_variable("s", s0)
+        static_point = self.input_point.get_static_point(first_speed)
+        static_point.copy_state_to(self.main_turbine.static_points[0])
 
         if self.main_turbine.static_points[0].get_variable("x") == 0:
             mu0 = self.main_turbine.static_points[0].get_variable("visc")
@@ -384,15 +373,15 @@ class TPStator1D(BaseStator1D):
                                              self.main_turbine.static_points[0].get_variable("x"))
 
         Ma0 = first_speed / ss0
+        h0 = self.main_turbine.static_points[0].get_variable("h")
 
         # Calculating Velocity and Thermodynamic Static Conditions Inside the Stator
-
         for i in range(self.options.n_stator):
 
             if i == 0:
 
-                self.h[i] = h0
-                self.s[i] = s0
+                self.h[i] = self.main_turbine.static_points[0].get_variable("h")
+                self.s[i] = self.main_turbine.static_points[0].get_variable("s")
                 self.rho[i] = self.main_turbine.static_points[0].get_variable("rho")
                 self.x[i] = self.main_turbine.static_points[0].get_variable("x")
                 self.p[i] = self.main_turbine.static_points[0].get_variable("p")
@@ -437,7 +426,7 @@ class TPStator1D(BaseStator1D):
 
                 self.p[i] = self.p[i-1] - dl[i] * self.dpdl_fr[i] - 0.5 * (self.rho[i] * (self.m_dot_s / (self.rho[i] * A_eff[i])) ** 2
                                                                            + self.rho[i-1] * (self.m_dot_s / (self.rho[i-1] * A_eff[i-1])) ** 2)
-                self.h[i] = h0 - 0.5 * (self.m_dot_s / (self.rho[i] * A_eff[i])) ** 2
+                self.h[i] = self.h[0] - 0.5 * (self.m_dot_s / (self.rho[i] * A_eff[i])) ** 2
 
                 self.__stator_points[i].set_variable("p", self.p[i])
                 self.__stator_points[i].set_variable("h", self.h[i])

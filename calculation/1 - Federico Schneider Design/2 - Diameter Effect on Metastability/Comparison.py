@@ -104,14 +104,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine1.evaluate_performances()
 
     output_array1[i, 0] = dv_perc[i]
-    output_array1[i, 1] = tesla_turbine1.Eta_tesla_ss
+    output_array1[i, 1] = tesla_turbine1.eta_tt
     output_array1[i, 2] = tesla_turbine1.work
     output_array1[i, 3] = tesla_turbine1.power
     output_array1[i, 4] = tesla_turbine1.rotor.rpm
     output_array1[i, 5] = tesla_turbine1.stator.m_dot_s
     output_array1[i, 6] = tesla_turbine1.points[1].get_variable("rho")
     output_array1[i, 7] = tesla_turbine1.static_points[1].get_variable("p")
-    output_array1[i, 8] = tesla_turbine1.stator.out_speed
+    output_array1[i, 8] = tesla_turbine1.stator.speed_out.v
 
     tesla_turbine2.rotor.dv_perc = dv_perc[i]
 
@@ -122,14 +122,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine2.evaluate_performances()
 
     output_array2[i, 0] = dv_perc[i]
-    output_array2[i, 1] = tesla_turbine2.Eta_tesla_ss
+    output_array2[i, 1] = tesla_turbine2.eta_tt
     output_array2[i, 2] = tesla_turbine2.work
     output_array2[i, 3] = tesla_turbine2.power
     output_array2[i, 4] = tesla_turbine2.rotor.rpm
     output_array2[i, 5] = tesla_turbine2.stator.m_dot_s
     output_array2[i, 6] = tesla_turbine2.points[1].get_variable("rho")
     output_array2[i, 7] = tesla_turbine2.static_points[1].get_variable("p")
-    output_array2[i, 8] = tesla_turbine2.stator.out_speed
+    output_array2[i, 8] = tesla_turbine2.stator.speed_out.v
 
 
     tesla_turbine3.rotor.dv_perc = dv_perc[i]
@@ -141,14 +141,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine3.evaluate_performances()
 
     output_array3[i, 0] = dv_perc[i]
-    output_array3[i, 1] = tesla_turbine3.Eta_tesla_ss
+    output_array3[i, 1] = tesla_turbine3.eta_tt
     output_array3[i, 2] = tesla_turbine3.work
     output_array3[i, 3] = tesla_turbine3.power
     output_array3[i, 4] = tesla_turbine3.rotor.rpm
     output_array3[i, 5] = tesla_turbine3.stator.m_dot_s
     output_array3[i, 6] = tesla_turbine3.points[1].get_variable("rho")
     output_array3[i, 7] = tesla_turbine3.static_points[1].get_variable("p")
-    output_array3[i, 8] = tesla_turbine3.stator.out_speed
+    output_array3[i, 8] = tesla_turbine3.stator.speed_out.v
 
     tesla_turbine4.rotor.dv_perc = dv_perc[i]
 
@@ -159,14 +159,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine4.evaluate_performances()
 
     output_array4[i, 0] = dv_perc[i]
-    output_array4[i, 1] = tesla_turbine4.Eta_tesla_ss
+    output_array4[i, 1] = tesla_turbine4.eta_tt
     output_array4[i, 2] = tesla_turbine4.work
     output_array4[i, 3] = tesla_turbine4.power
     output_array4[i, 4] = tesla_turbine4.rotor.rpm
     output_array4[i, 5] = tesla_turbine4.stator.m_dot_s
     output_array4[i, 6] = tesla_turbine4.points[1].get_variable("rho")
     output_array4[i, 7] = tesla_turbine4.static_points[1].get_variable("p")
-    output_array4[i, 8] = tesla_turbine4.stator.out_speed
+    output_array4[i, 8] = tesla_turbine4.stator.speed_out.v
 
     tesla_turbine5.rotor.dv_perc = dv_perc[i]
 
@@ -177,14 +177,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine5.evaluate_performances()
 
     output_array5[i, 0] = dv_perc[i]
-    output_array5[i, 1] = tesla_turbine5.Eta_tesla_ss
+    output_array5[i, 1] = tesla_turbine5.eta_tt
     output_array5[i, 2] = tesla_turbine5.work
     output_array5[i, 3] = tesla_turbine5.power
     output_array5[i, 4] = tesla_turbine5.rotor.rpm
     output_array5[i, 5] = tesla_turbine5.stator.m_dot_s
     output_array5[i, 6] = tesla_turbine5.points[1].get_variable("rho")
     output_array5[i, 7] = tesla_turbine5.static_points[1].get_variable("p")
-    output_array5[i, 8] = tesla_turbine5.stator.out_speed
+    output_array5[i, 8] = tesla_turbine5.stator.speed_out.v
 
     tesla_turbine6.rotor.dv_perc = dv_perc[i]
 
@@ -195,14 +195,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine6.evaluate_performances()
 
     output_array6[i, 0] = dv_perc[i]
-    output_array6[i, 1] = tesla_turbine6.Eta_tesla_ss
+    output_array6[i, 1] = tesla_turbine6.eta_tt
     output_array6[i, 2] = tesla_turbine6.work
     output_array6[i, 3] = tesla_turbine6.power
     output_array6[i, 4] = tesla_turbine6.rotor.rpm
     output_array6[i, 5] = tesla_turbine6.stator.m_dot_s
     output_array6[i, 6] = tesla_turbine6.points[1].get_variable("rho")
     output_array6[i, 7] = tesla_turbine6.static_points[1].get_variable("p")
-    output_array6[i, 8] = tesla_turbine6.stator.out_speed
+    output_array6[i, 8] = tesla_turbine6.stator.speed_out.v
 
 # %%------------   PLOT RESULTS (1)                     -------------------------------------------------------------> #
 

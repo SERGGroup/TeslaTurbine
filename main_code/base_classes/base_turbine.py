@@ -1,5 +1,6 @@
 from REFPROPConnector import ThermodynamicPoint as TP
 from .support import BaseTeslaGeometry, BaseTeslaOptions
+from .base_diffuser import BaseDiffuser, NoDiffuser
 from .base_stator import BaseStator0D, BaseStator1D
 from .base_rotor import BaseRotor
 
@@ -10,7 +11,7 @@ class BaseTeslaTurbine:
 
             self, fluid, geometry: BaseTeslaGeometry,
             options: BaseTeslaOptions, stator: type(BaseStator0D),
-            rotor: type(BaseRotor)
+            rotor: type(BaseRotor), diffuser: type(BaseDiffuser) = NoDiffuser
 
     ):
 
@@ -18,17 +19,19 @@ class BaseTeslaTurbine:
         self.geometry = geometry
         self.options = options
 
-        self.__init_states(4)
+        self.__init_states(5)
 
         self.stator = stator(self)
         self.rotor = rotor(self)
+        self.diffuser = diffuser(self)
 
         self.P_in = 0.
         self.P_out = 0.
         self.T_in = 0.
 
-        self.Eta_tesla_ss = 0.
-        self.Eta_rotor_ss = 0.
+        self.eta_tt = 0.
+        self.eta_ss = 0.
+
         self.work = 0.
         self.power = 0.
 
@@ -43,7 +46,7 @@ class BaseTeslaTurbine:
             self.points.append(base_point.duplicate())
             self.static_points.append(base_point.duplicate())
 
-        self.isentropic_outlet = base_point.duplicate()
+        self.iso_entropic_outlet = base_point.duplicate()
 
     def iterate_pressure(self):
 
@@ -55,16 +58,22 @@ class BaseTeslaTurbine:
 
             P_1s = (P_up + P_down) / 2
 
-            self.solve_with_stator_outlet_pressure(P_1s)
+            try:
 
-            P_out_tent = self.static_points[3].get_variable("P")
-            error = abs((P_out_tent - self.P_out) / P_out_tent)
+                self.solve_with_stator_outlet_pressure(P_1s)
 
-            if error < 0.0001:
-                break
-            elif self.P_out < P_out_tent:
-                P_up = P_1s
-            else:
+                P_out_tent = self.static_points[3].get_variable("P")
+                error = abs((P_out_tent - self.P_out) / P_out_tent)
+
+                if error < 0.0001:
+                    break
+                elif self.P_out < P_out_tent:
+                    P_up = P_1s
+                else:
+                    P_down = P_1s
+
+            except:
+
                 P_down = P_1s
 
     def solve_with_stator_outlet_pressure(self, P_1s):
@@ -72,6 +81,8 @@ class BaseTeslaTurbine:
         self.static_points[1].set_variable("P", P_1s)
         self.stator.solve()
         self.rotor.solve()
+
+        # self.diffuser.solve()
 
     def fix_rotor_inlet_condition(self, P_1s, T_1s, alpha, v):
 
@@ -81,35 +92,20 @@ class BaseTeslaTurbine:
         self.stator.speed_out.init_from_codes("alpha", alpha, "v", v)
         self.static_points[1].set_variable("P", P_1s)
         self.static_points[1].set_variable("T", T_1s)
-
         self.rotor.solve()
 
     def evaluate_performances(self):
 
-        self.static_points[0].copy_state_to(self.isentropic_outlet)
+        self.static_points[0].copy_state_to(self.iso_entropic_outlet)
 
-        self.isentropic_outlet.set_variable("s", self.static_points[0].get_variable("s"))
-        self.isentropic_outlet.set_variable("p", self.static_points[3].get_variable("p"))
+        self.iso_entropic_outlet.set_variable("s", self.static_points[0].get_variable("s"))
+        self.iso_entropic_outlet.set_variable("p", self.static_points[3].get_variable("p"))
 
-        self.Eta_tesla_ss_dh = (self.points[0].get_variable("h")-self.points[3].get_variable("h")) / (
-                self.static_points[0].get_variable("h") - self.isentropic_outlet.get_variable("h"))
+        self.eta_ss = (self.points[0].get_variable("h") - self.points[3].get_variable("h")) / (
+                self.static_points[0].get_variable("h") - self.iso_entropic_outlet.get_variable("h"))
 
         self.work = self.rotor.first_speed.vt * self.rotor.first_speed.u - self.rotor.rotor_points[-1].speed.vt * self.rotor.rotor_points[-1].speed.u
         self.power = self.work * self.rotor.m_dot_ch
 
-        self.Eta_tesla_ss = self.work / (self.static_points[0].get_variable("h") - self.isentropic_outlet.get_variable("h"))
-
-    def evaluate_rotor_performances(self):
-
-        self.isentropic_outlet = self.static_points[2].duplicate()
-
-        self.isentropic_outlet.set_variable("s", self.static_points[2].get_variable("s"))
-        self.isentropic_outlet.set_variable("p", self.static_points[3].get_variable("p"))
-
-        self.Eta_rotor_ss = (self.static_points[2].get_variable("h") - self.static_points[3].get_variable("h")) / (
-                self.static_points[2].get_variable("h") - self.isentropic_outlet.get_variable("h"))
-
-        self.work = self.rotor.first_speed.vt * self.rotor.first_speed.u - self.rotor.rotor_points[-1].speed.vt * \
-                    self.rotor.rotor_points[-1].speed.u
-        self.power = self.work * self.rotor.m_dot_ch
+        self.eta_tt = self.work / (self.static_points[0].get_variable("h") - self.iso_entropic_outlet.get_variable("h"))
 

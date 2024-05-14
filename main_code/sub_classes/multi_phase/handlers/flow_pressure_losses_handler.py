@@ -33,7 +33,7 @@ def flow_losses_handler(original_class):
     """
     def dpdl(self):
 
-        x = self.thermo_point.get_variable("x")
+        x = self.total_point.get_variable("x")
         rho_liq = self.liq_phase.get_variable("rho")
         rho_vap = self.vap_phase.get_variable("rho")
         rho_ratio = rho_vap / rho_liq

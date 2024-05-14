@@ -11,7 +11,7 @@ class SPRotorStep(BaseRotorStep):
 
     def get_variations(self, dr):
 
-        rho = self.thermo_point.get_variable("rho")
+        rho = self.static_point.get_variable("rho")
         r_new = self.new_pos.r
         u = self.speed.u
         wt = self.speed.wt
@@ -22,7 +22,7 @@ class SPRotorStep(BaseRotorStep):
         dvr = vr_new - self.speed.vr
 
         coef = 6.5
-        mu = self.thermo_point.get_variable("visc")
+        mu = self.static_point.get_variable("visc")
         ni = mu / rho
 
         wtFG = wt - dr * (-(10 / coef) * omega - (ni * 60 / (-vr_new * coef * self.geometry.b_channel ** 2) + 1 / r_new) * wt)
@@ -30,10 +30,11 @@ class SPRotorStep(BaseRotorStep):
         dwt = -dr *(-(10 / coef) * omega - (ni * 60/(-vr_new * coef * self.geometry.b_channel ** 2)+1 / r_new) * wt_c)
         wt_new = self.speed.wt + dwt
 
-        dP = - dr * rho * ( omega ** 2 * r_new + 2 * wt_new * omega * coef / 6 + coef ** 2 / 30 * wt_new ** 2 / r_new - coef ** 2 / 30 *
+        dp = - dr * rho * ( omega ** 2 * r_new + 2 * wt_new * omega * coef / 6 + coef ** 2 / 30 * wt_new ** 2 / r_new - coef ** 2 / 30 *
                     vr_new * dvr / dr + 2 * coef * ni * vr_new / self.geometry.b_channel ** 2)
 
-        return dvr, dwt, dP, 0.
+        dvt = dwt + self.main_rotor.omega * dr
+        return dvr, dvt, dp, 0.
 
     def solve(self):
 
