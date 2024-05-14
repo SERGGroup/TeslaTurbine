@@ -5,7 +5,7 @@ class RotorOptions:
     integr_method = "Std"
     integr_variable = 0.001
     sp_check = False
-
+    evaluate_internal_total_condition = False
 
 class StatorOptions:
 

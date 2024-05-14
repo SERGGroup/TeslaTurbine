@@ -53,8 +53,9 @@ class BaseRotorStep(ABC):
         new_step.static_point.set_variable("P", p_new)
         new_step.static_point.set_variable("H", h_new)
 
-        total_point = new_step.total_point.get_stagnation_point(speed=new_speed.v)
-        total_point.copy_state_to(new_step.total_point)
+        if self.options.evaluate_internal_total_condition:
+            total_point = new_step.static_point.get_stagnation_point(speed=new_speed.v)
+            total_point.copy_state_to(new_step.total_point)
 
         return new_step
 
@@ -128,7 +129,6 @@ class BaseRotor(ABC):
         b = self.options.integr_variable * dr_tot
         a = np.power(dr_tot / b + 1, 1 / self.options.n_rotor)
 
-
         for i in range(self.options.n_rotor):
 
             if self.options.profile_rotor:
@@ -140,8 +140,15 @@ class BaseRotor(ABC):
         if self.options.profile_rotor:
             self.rotor_points.append(new_step)
 
-        self.rotor_points[-1].total_point.copy_state_to(self.main_turbine.points[3])
         self.rotor_points[-1].static_point.copy_state_to(self.main_turbine.static_points[3])
+
+        if self.options.evaluate_internal_total_condition:
+            self.rotor_points[-1].total_point.copy_state_to(self.main_turbine.points[3])
+
+        else:
+            new_speed = self.rotor_points[-1].speed.v
+            total_point = self.rotor_points[-1].static_point.get_stagnation_point(speed=new_speed)
+            total_point.copy_state_to(self.main_turbine.points[3])
 
     @abstractmethod
     def evaluate_gap_losses(self):
@@ -159,7 +166,6 @@ class BaseRotor(ABC):
 
         self.rotor_inlet_speed = self.main_turbine.stator.speed_out
         rho_out = self.main_turbine.points[1].get_variable("rho")
-
 
         self.main_turbine.points[2].set_variable("P", 101325)
         self.main_turbine.points[2].set_variable("h", 500000)
