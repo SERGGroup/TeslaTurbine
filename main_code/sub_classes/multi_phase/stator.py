@@ -67,8 +67,8 @@ class TPStator0D(BaseStator0D):
         # LOSS FACTOR RODGERS
         pitch = 2 * np.pi * self.geometry.r_int / self.geometry.Z_stat
         ni1 = mu1 / self.static_output_point.get_variable("rho")
-        Re_rodg = v1 * self.geometry.H_s / ni1
-        Xi_rodg = (0.05/(Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha_rad) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha_rad) / self.geometry.H_s)
+        Re_rodg = v1 * self.geometry.hs / ni1
+        Xi_rodg = (0.05/(Re_rodg ** 0.2)) * ((3 * np.tan(self.geometry.alpha_rad) * self.geometry.chord) / pitch + pitch * np.cos(self.geometry.alpha_rad) / self.geometry.hs)
 
         # LOSS FACTOR DIXON (P. 257)
 
@@ -82,8 +82,8 @@ class TPStator0D(BaseStator0D):
 
         self.p_out = self.static_output_point.get_variable("P")
 
-        A0 = (2 * np.pi * (1.5 * self.geometry.r_int) / self.geometry.N_s) * self.geometry.Z_stat * self.geometry.H_s
-        A1 = self.geometry.Z_stat * self.main_turbine.geometry.throat_width * self.geometry.H_s
+        A0 = (2 * np.pi * (1.5 * self.geometry.r_int) / self.geometry.N_s) * self.geometry.Z_stat * self.geometry.hs
+        A_throat = self.geometry.a_throat
 
         if self.options.iterate_phi:
 
@@ -114,7 +114,7 @@ class TPStator0D(BaseStator0D):
                                            self.static_output_point.get_variable("x"))
         self.Ma_1 = v1/ss1
 
-        self.m_dot_s = A1 * self.static_output_point.get_variable("rho") * v_out
+        self.m_dot_s = self.geometry.Z_stat * A_throat * self.static_output_point.get_variable("rho") * v_out
 
         # Calculating Static Point [0] Conditions
         rho_00 = self.input_point.get_variable("rho")
@@ -181,10 +181,9 @@ class TPStatorMil(BaseStator0D):
         Ph = np.linspace(self.stator_mil_in.get_variable("p") - 100, self.stator_mil_out.get_variable("p"), n)
         Ss = np.linspace(self.stator_mil_in.get_variable("s"), self.stator_mil_in.get_variable("s"), n)
 
-        A_throat = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
+        A_throat = self.geometry.a_throat
 
         rhov_throat = 0.
-        i_max = 0.
         v_sound = 0.
 
         v = np.zeros(n)
@@ -221,11 +220,11 @@ class TPStatorMil(BaseStator0D):
                 v_sound = v[i]
                 rhov_throat = rhov[i]
 
-            m_dot_s_in = self.main_turbine.geometry.stator.Z_stat * A_throat * rhov_throat
+            m_dot_s_in = self.geometry.Z_stat * A_throat * rhov_throat
             m_dot_arr[i] = m_dot_s_in
 
         h_out = self.stator_mil_in.get_variable("h") - (v_sound ** 2) / 2
-        self.m_dot_s = self.main_turbine.geometry.stator.Z_stat * A_throat * rhov_throat
+        self.m_dot_s = self.geometry.Z_stat * A_throat * rhov_throat
 
         return v_sound, h_out
 
@@ -253,7 +252,7 @@ class TPStatorMil(BaseStator0D):
         self.speed_out.init_from_codes("v", out_speed, "alpha", self.geometry.alpha_rad)
 
         # STATIC STATOR INLET CONDITIONS for Performance Evaluation
-        v0 = self.m_dot_s / (self.main_turbine.points[0].get_variable("rho") * 2 * np.pi * self.geometry.r_0 * self.main_turbine.geometry.H_s * self.geometry.Z_stat)
+        v0 = self.m_dot_s / (self.main_turbine.points[0].get_variable("rho") * self.geometry.a_inlet * self.geometry.Z_stat)
         static_point = self.main_turbine.points[0].get_static_point(v0)
         static_point.copy_state_to(self.main_turbine.static_points[0])
 

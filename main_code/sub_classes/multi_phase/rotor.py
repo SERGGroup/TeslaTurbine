@@ -165,23 +165,13 @@ class TPRotor(BaseRotor):
 
         if self.gap_losses_control:
 
-            A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
-            A_out_sb = ((self.main_turbine.geometry.throat_width / np.tan(
-                np.radians(self.main_turbine.geometry.alpha1)) + self.geometry.gap / np.sin(
-                np.radians(self.main_turbine.geometry.alpha1))) / np.cos(
-                np.radians(self.main_turbine.geometry.alpha1)) - self.geometry.gap * np.tan(
-                np.radians(self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
-                np.radians(self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
-            A_ratio1 = A_in_sb / A_out_sb
+            a_throat_stat = self.main_turbine.geometry.stator.a_throat
+            a_ratio_stat = self.main_turbine.geometry.stator.a_ratio_discharge
 
             # Evaluation of Enlargement Pressure Losses
             h_0_star = self.main_turbine.points[1].get_variable("h")
             h_star = self.main_turbine.static_points[1].get_variable("h")
             x_guess1 = self.main_turbine.static_points[1].get_variable("x")
-            epsilon = 1 / (1 + (1 - x_guess1) / x_guess1 * (self.vap_phase.get_variable("rho") / self.liq_phase.get_variable("rho")) ** (2 / 3))
-
-            rho_guess = ((1 - x_guess1 ** 2) / (self.liq_phase.get_variable("rho") * (1 - epsilon)) +
-                         x_guess1 ** 2 / (self.vap_phase.get_variable("rho") * epsilon)) ** (-1)
 
             n_it = 20
             x_star = 0.
@@ -206,8 +196,8 @@ class TPRotor(BaseRotor):
                 rho_first_guess = ((1 - x_guess1 ** 2) / (rho_l * (1 - epsilon_star)) + x_guess1 ** 2 / (rho_v * epsilon_star)) ** (-1)
                 rho_h_star = (x_guess1 / rho_v + (1 - x_guess1) / rho_l) ** (-1)
                 rho_sec_guess = ((1 - x_guess1) ** 3 / (rho_l * (1 - epsilon_star)) ** 2 + x_guess1 ** 3 / (rho_v * epsilon_star) ** 2) ** (-1/2)
-                G_en = self.main_turbine.stator.m_dot_s / (A_in_sb * self.main_turbine.stator.geometry.Z_stat)
-                DeltaP_en = G_en ** 2 / (2 * rho_l) * (2 * rho_l * A_ratio1 * (A_ratio1 - 1) / rho_first_guess - rho_h_star * rho_l * (A_ratio1 - 1) / rho_sec_guess ** 2)
+                G_en = self.main_turbine.stator.m_dot_s / (a_throat_stat * self.main_turbine.stator.geometry.Z_stat)
+                DeltaP_en = G_en ** 2 / (2 * rho_l) * (2 * rho_l * a_ratio_stat * (a_ratio_stat - 1) / rho_first_guess - rho_h_star * rho_l * (a_ratio_stat - 1) / rho_sec_guess ** 2)
                 P_0_star = self.main_turbine.points[1].get_variable("p") + DeltaP_en
 
                 __tmp_point[1].set_variable("P", P_0_star)
@@ -225,8 +215,8 @@ class TPRotor(BaseRotor):
                     x_guess1 = x_star
 
             # Evaluation of Contraction Pressure Losses
-            a_ratio = self.geometry.a_ratio_inlet
-            Cc = 1 - (1 - a_ratio) / (2.08 * (1 - a_ratio) + 0.5371)
+            a_ratio_rotor = self.geometry.a_ratio_inlet
+            Cc = 1 - (1 - a_ratio_rotor) / (2.08 * (1 - a_ratio_rotor) + 0.5371)
             g_con = self.m_dot_ch / self.geometry.a_ext
             h_0 = self.main_turbine.points[1].get_variable("h")
 
@@ -251,7 +241,7 @@ class TPRotor(BaseRotor):
                 rho_first_guess2 = ((1 - x_guess2 ** 2) / (rho_l2 * (1 - epsilon_star2)) + x_guess2 ** 2 / (rho_v2 * epsilon_star2)) ** (-1)
                 rho_h_star2 = (x_guess2 / rho_v2 + (1 - x_guess2) / rho_l2) ** (-1)
                 rho_sec_guess2 = ((1 - x_guess2) ** 3 / (rho_l2 * (1 - epsilon_star2)) ** 2 + x_guess2 ** 3 / (rho_v2 * epsilon_star2) ** 2) ** (-1 / 2)
-                DeltaP_con = g_con ** 2 * (rho_h_star2 / 2 * ((1 / (Cc * rho_sec_guess2) ** 2) - (a_ratio / rho_sec_guess2) ** 2) + (1 - Cc) / rho_first_guess2) # RIVEDERE
+                DeltaP_con = g_con ** 2 * (rho_h_star2 / 2 * ((1 / (Cc * rho_sec_guess2) ** 2) - (a_ratio_rotor / rho_sec_guess2) ** 2) + (1 - Cc) / rho_first_guess2) # RIVEDERE
 
                 vr_R = g_con / __tmp_point[2].get_variable("rho")
                 self.rotor_inlet_speed.init_from_codes("v_t", self.main_turbine.stator.speed_out.vt, "v_r", vr_R)

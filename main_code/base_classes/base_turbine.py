@@ -1,11 +1,15 @@
 from REFPROPConnector import ThermodynamicPoint as TP
 from .support import BaseTeslaGeometry, BaseTeslaOptions
 from .base_diffuser import BaseDiffuser, NoDiffuser
-from .base_stator import BaseStator0D, BaseStator1D
+from .base_stator import BaseStator0D
 from .base_rotor import BaseRotor
+import numpy as np
 
 
 class BaseTeslaTurbine:
+
+    __n_packs = 50
+    __m_dot_tot = None
 
     def __init__(
 
@@ -60,9 +64,9 @@ class BaseTeslaTurbine:
 
             try:
 
-                self.solve_with_stator_outlet_pressure(P_1s)
+                self.solve_with_stator_outlet_pressure(P_1s, check_P_out=True)
 
-                P_out_tent = self.static_points[3].get_variable("P")
+                P_out_tent = self.static_points[-1].get_variable("P")
                 error = abs((P_out_tent - self.P_out) / P_out_tent)
 
                 if error < 0.0001:
@@ -76,13 +80,20 @@ class BaseTeslaTurbine:
 
                 P_down = P_1s
 
-    def solve_with_stator_outlet_pressure(self, P_1s):
+    def solve_with_stator_outlet_pressure(self, P_1s, check_P_out=False):
 
         self.static_points[1].set_variable("P", P_1s)
         self.stator.solve()
         self.rotor.solve()
 
-        # self.diffuser.solve()
+        if (not check_P_out) or (self.rotor.output_point.get_variable("P") > self.P_out):
+
+            self.diffuser.solve()
+
+        else:
+
+            self.rotor.output_point.copy_state_to(self.points[-1])
+            self.rotor.static_output_point.copy_state_to(self.static_points[-1])
 
     def fix_rotor_inlet_condition(self, P_1s, T_1s, alpha, v):
 
@@ -109,3 +120,37 @@ class BaseTeslaTurbine:
 
         self.eta_tt = self.work / (self.static_points[0].get_variable("h") - self.iso_entropic_outlet.get_variable("h"))
 
+    @property
+    def m_dot_tot(self):
+
+        return self.rotor.m_dot_ch * self.geometry.rotor.n_channels * self.__n_packs
+
+    @m_dot_tot.setter
+    def m_dot_tot(self, m_dot_tot):
+
+        self.__m_dot_tot = m_dot_tot
+        self.__n_packs = None
+
+    @property
+    def n_packs(self):
+
+        if self.__m_dot_tot is not None:
+
+            try:
+
+                # round up to the highest integer
+                return np.ceil(self.__m_dot_tot / (self.rotor.m_dot_ch * self.geometry.rotor.n_channels))
+
+            except:
+
+                return None
+
+        else:
+
+            return self.__n_packs
+
+    @n_packs.setter
+    def n_packs(self, n_packs):
+
+        self.__m_dot_tot = None
+        self.__n_packs = n_packs

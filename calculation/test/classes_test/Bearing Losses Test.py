@@ -29,7 +29,7 @@ tt.points[0].set_variable("T", T_in)
 
 tt.geometry.d_main = 0.2
 tt.geometry.H_s = 0.00094
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 tt.rotor.gap_losses_control = True
 
 # Design Parameters

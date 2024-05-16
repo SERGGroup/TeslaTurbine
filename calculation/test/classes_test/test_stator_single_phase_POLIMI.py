@@ -24,7 +24,7 @@ tt.points[0].set_variable("T", T_in)
 tt.geometry.d_main = 0.2
 tt.geometry.throat_width = 0.0004934
 tt.geometry.H_s = 0.00094
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 
 tt.geometry.rotor.d_ratio = 2.5
 tt.geometry.rotor.n_channels = 2

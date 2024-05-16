@@ -99,6 +99,9 @@ class BaseRotor(ABC):
         self.input_point = self.main_turbine.points[2]
         self.output_point = self.main_turbine.points[3]
 
+        self.static_input_point = self.main_turbine.static_points[2]
+        self.static_output_point = self.main_turbine.static_points[3]
+
         self.rotor_points = list()
         self.rotor_step_cls = rotor_step
 
@@ -282,6 +285,7 @@ class BaseRotor(ABC):
     def omega(self, omega):
 
         self.__omega = omega
+        self.__dv_perc = None
 
     @property
     def rpm(self):
@@ -292,3 +296,4 @@ class BaseRotor(ABC):
     def rpm(self, rpm):
 
         self.omega = rpm / 60 * (2 * np.pi)
+        self.__dv_perc = None

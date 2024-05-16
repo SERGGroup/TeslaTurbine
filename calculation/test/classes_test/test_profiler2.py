@@ -32,7 +32,7 @@ for theta in theta:
 A_th, A_eff = geom.stator.get_area(x_ss, y_ss, y_ps, x_ps, m, options.n_stator)
 
 throat = geom.stator.throat_width
-alpha_out = geom.stator.alpha1
+alpha_out = geom.stator.alpha_stat
 
 # %%------------   PLOT
 

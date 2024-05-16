@@ -5,10 +5,24 @@ import numpy as np
 
 class BaseDiffuser:
 
+    """
+        Using this class means that the dynamic pressure at the outlet of the rotor is considered
+        to be completely lost. Moreover, the outlet speed is evaluated from the internal radius dimension:
+
+            - Total pressure in the intermediate point (the outlet of the rotor) == static pressure
+            - Total enthalpy at the outlet of the rotor is constant (the compression energy is converted in vorticity)
+
+            - No residual in the intermediate point: static point = total point
+
+            - from the intermediate point to the outlet the total pressure and enthalpy are kept constant (no losses)
+            - The static points depends on the outlet density (has to be iterated)
+
+     """
+
     def __init__(self, main_turbine):
 
         self.main_turbine = main_turbine
-        self.options = self.main_turbine.options
+        self.options = self.main_turbine.options.diffuser
         self.geometry = self.main_turbine.geometry
 
         self.input_point = self.main_turbine.points[3]
@@ -16,6 +30,7 @@ class BaseDiffuser:
 
         self.static_input_point = self.main_turbine.static_points[3]
         self.static_output_point = self.main_turbine.static_points[4]
+        self.intermediate_point = self.main_turbine.points[3].duplicate()
 
         # Tobe updated in self.solve()
         self.m_dot_tot = 0
@@ -23,45 +38,39 @@ class BaseDiffuser:
 
     def solve(self):
 
-        m_ch = self.main_turbine.rotor.m_dot_ch
-        n_ch = self.main_turbine.geometry.rotor.n_channels
-        __tmp_point = self.input_point.duplicate()
+        # Total pressure in the intermediate point (the outlet of the rotor) == static pressure
+        # Total enthalpy at the outlet of the rotor is constant (the compression energy is converted in vorticity)
+        # No residual in the intermediate point: static point = total point
+        self.intermediate_point.set_variable("P", self.static_input_point.get_variable("P"))
+        self.intermediate_point.set_variable("H", self.input_point.get_variable("H"))
 
-        rho_u_curr = m_ch * n_ch / self.geometry.rotor.a_int
-        rho_in = self.input_point.get_variable("rho")
-        p_in = self.input_point.get_variable("P")
+        # From the intermediate point to the outlet the total pressure and enthalpy are kept constant (no losses)
+        self.intermediate_point.copy_state_to(self.main_turbine.points[4])
 
-        dp_max = rho_u_curr ** 2 / rho_in
-        p_out_lim = [p_in-dp_max, p_in]
+        # The static points depends on the outlet density (has to be iterated)
+        rho_u_curr = self.main_turbine.m_dot_tot / self.geometry.rotor.a_int
+        rho_0 = self.intermediate_point.get_variable("rho")
+        __tmp_point = self.intermediate_point.duplicate()
 
-        for i in range(self.options.general_bisection_limit):
+        rho_curr = rho_0
+        for i in range(self.options.n_max_iter):
 
-            p_out_curr = (p_out_lim[0] + p_out_lim[1]) / 2
-            __tmp_point.set_variable("P", p_out_curr)
-            __tmp_point.set_variable("s", self.input_point.get_variable("s"))
+            u_curr = rho_u_curr / rho_curr
+            __tmp_point = self.intermediate_point.get_static_point(speed=u_curr)
 
-            h_curr = __tmp_point.get_variable("h")
+            rho_old = rho_curr
             rho_curr = __tmp_point.get_variable("rho")
+            err = np.abs(rho_curr - rho_old) / rho_old
 
-            dh = self.input_point.get_variable("h") - h_curr
-            u_enth = np.sqrt(np.abs(2 * dh))
-            u_rho = rho_u_curr / rho_curr
+            if err < self.options.tol:
 
-            if u_rho > u_enth:
-
-                p_out_lim[1] = p_out_curr
+                break
 
             else:
 
-                p_out_lim[0] = p_out_curr
+                rho_curr = rho_old * (1 - self.options.alpha) + self.options.alpha * __tmp_point.get_variable("rho")
 
-        p_out_curr = (p_out_lim[0] + p_out_lim[1]) / 2
-
-        self.main_turbine.points[4].set_variable("P", p_out_curr)
-        self.main_turbine.points[4].set_variable("s", self.input_point.get_variable("s"))
-
-        self.main_turbine.static_output_point[4].set_variable("P", p_out_curr)
-        self.main_turbine.static_output_point[4].set_variable("s", self.input_point.get_variable("s"))
+        __tmp_point.copy_state_to(self.main_turbine.static_output_point[4])
 
 
 class NoDiffuser(BaseDiffuser):

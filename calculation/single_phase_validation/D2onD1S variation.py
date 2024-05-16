@@ -30,7 +30,7 @@ tt.points[0].set_variable("T", T_in)
 d_ratio = np.linspace(0.2, 0.6, 50)
 tt.geometry.d_main = 0.2
 tt.geometry.H_s = 0.00094
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 
 # Design Parameters
 tt.geometry.rotor.b_channel = 0.00007

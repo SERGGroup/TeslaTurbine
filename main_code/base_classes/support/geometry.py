@@ -4,13 +4,13 @@ import numpy as np
 class RotorGeometry:
 
     d_ratio = 3
+
     b_channel = 0.00007
     roughness = 0.000001
-    n_channels = 50
-    n_packs = 50
-    n_discs = 2
+
+    n_channels = 1
+
     gap = 0.0004
-    alpha_1PS = 78.503
     disc_thickness = 0.0008
 
     def __init__(self, main_geom):
@@ -66,6 +66,10 @@ class StatorGeometry:
     N_s = 100
     gap = 0.0004
 
+    throat_width = 0.0004934
+    alpha = 85
+    alpha_ps = 78.503
+
     # Parameters for Stator Profiling
     t_u = 0.12      # [mm]
     ch_u = 12.5     # [mm]
@@ -98,7 +102,7 @@ class StatorGeometry:
 
         for i in range(n):
             ax[i] = r_0 - (r_0 - i * ds)
-            dup, dbottom, dmidline, m, m_perp = self.get_variation(ax[i])
+            dup, dbottom, dmidline, m, m_perp = self.__get_variation(ax[i])
 
             if i == 0:
                 prof_array[i, 0] = self.u_0
@@ -150,28 +154,15 @@ class StatorGeometry:
 
         return X_SS, Y_SS, Y_PS, X_PS, m, alpha_out
 
-    def get_variation(self, ax):
+    def __get_variation(self, ax):
 
         dup = 5 / 3 * self.t_u * self.ch_u * (self.a_u * (ax / self.ch_u) ** 2 + self.b_u * (ax / self.ch_u) ** 3 + self.c_u * (ax / self.ch_u) ** 4)
         dbottom = 5 / 3 * self.t_b * self.ch_b * (self.a_b * (ax / self.ch_b) ** 2 + self.b_b * (ax/ self.ch_b) ** 3 + self.c_b * (ax / self.ch_b) ** 4)
         dmidline = (dup + dbottom) / 2
-        m =  5 / 6 * self.t_u * (2 * self.a_u * (ax / self.ch_u) + 3 * self.b_u * (ax / self.ch_u) ** 2 + 4 * self.c_u * (ax / self.ch_u) ** 3) + 5 / 6 * self.t_b * (2 * self.a_b * (ax / self.ch_b) + 3 * self.b_b * (ax/ self.ch_b) ** 2 + 4 * self.c_b * (ax / self.ch_b) ** 3)
+        m = 5 / 6 * self.t_u * (2 * self.a_u * (ax / self.ch_u) + 3 * self.b_u * (ax / self.ch_u) ** 2 + 4 * self.c_u * (ax / self.ch_u) ** 3) + 5 / 6 * self.t_b * (2 * self.a_b * (ax / self.ch_b) + 3 * self.b_b * (ax/ self.ch_b) ** 2 + 4 * self.c_b * (ax / self.ch_b) ** 3)
         m_perp = - 1 / m
 
         return dup, dbottom, dmidline, m, m_perp
-
-    def geometric_parameters(self, X_ss, Y_ss, Y_ps, X_ps, m, n):
-
-        A_th = np.zeros(n)
-        A_eff = np.zeros(n)
-
-        for i in range(n):
-            A_th[i] = np.sqrt((X_ss[i] - X_ps[i]) ** 2 + (Y_ss[i] - Y_ps[i]) ** 2) * self.H_s
-            A_eff[i] = A_th[i] * np.cos(np.arctan(m[i]))
-
-        throat_width = np.min(A_eff) / self.H_s
-
-        return A_th, A_eff, throat_width
 
     @property
     def d_int(self):
@@ -200,15 +191,57 @@ class StatorGeometry:
     @property
     def alpha_rad(self):
 
-        return self.main_class.alpha1 * np.pi / 180
+        return self.alpha * np.pi / 180
+
+    @alpha_rad.setter
+    def alpha_rad(self, alpha_rad):
+
+        self.alpha = alpha_rad * 180 / np.pi
+
+    @property
+    def alpha_ps_rad(self):
+
+        return self.alpha_ps * np.pi / 180
+
+    @alpha_ps_rad.setter
+    def alpha_ps_rad(self, alpha_ps_rad):
+
+        self.alpha_ps = alpha_ps_rad * 180 / np.pi
+
+    @property
+    def hs(self):
+
+        n_ch = self.main_class.n_channels
+        return (n_ch - 1) * self.main_class.rotor.disc_thickness + n_ch * self.main_class.rotor.b_channel
+
+    @property
+    def a_throat(self):
+
+        return self.throat_width * self.hs
+
+    @property
+    def a_inlet(self):
+
+        return 2 * np.pi * self.r_0 * self.hs
+
+    @property
+    def a_ratio_discharge(self):
+
+        beta = np.pi / 2 - self.alpha_rad
+        theta = np.pi / 2 - self.alpha_ps_rad
+
+        l_12 = (self.throat_width / np.tan(beta) + self.gap / np.sin(beta)) / np.cos(beta)
+        l_tot = l_12 - self.gap * np.tan(beta) - self.gap / np.tan(theta)
+        return self.throat_width / l_tot
 
 
 class BaseTeslaGeometry:
 
+    # To remove
+    # H_s = 0.
+
+    # To keep
     d_main = 0.2
-    H_s = 0.
-    throat_width = 0.0004934
-    alpha1 = 85
 
     def __init__(
 
@@ -221,4 +254,38 @@ class BaseTeslaGeometry:
         self.stator = stator_geometry(self)
         self.rotor = rotor_geometry(self)
 
-        self.H_s = (self.rotor.n_discs - 1) * self.rotor.disc_thickness + self.rotor.n_discs * self.rotor.b_channel
+    @property
+    def n_channels(self):
+
+        return self.rotor.n_channels
+
+    @n_channels.setter
+    def n_channels(self, n_channels):
+
+        self.rotor.n_channels = n_channels
+
+    @property
+    def throat_width(self):
+        return self.stator.throat_width
+
+    @throat_width.setter
+    def throat_width(self, throat_width):
+        self.stator.throat_width = throat_width
+
+    @property
+    def alpha_stat(self):
+        return self.stator.alpha
+
+    @alpha_stat.setter
+    def alpha_stat(self, alpha_stat):
+        self.stator.alpha = alpha_stat
+
+    @property
+    def H_s(self):
+
+        return self.stator.hs
+
+    @H_s.setter
+    def H_s(self, H_s):
+
+        pass

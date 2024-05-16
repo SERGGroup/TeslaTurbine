@@ -22,7 +22,7 @@ tt.P_out = 3800000                            # [Pa]
 
 tt.geometry.rotor.n_channels = 2
 tt.geometry.H_s = 0.001
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 
 # Design Parameters
 tt.geometry.rotor.d_ratio = 2.5

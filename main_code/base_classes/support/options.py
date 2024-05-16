@@ -18,6 +18,11 @@ class StatorOptions:
     integr_method = "Std"
     roughness = 5e-7
 
+class DiffuserOptions:
+
+    n_max_iter = 20
+    alpha = 0.9
+    toll = 1e-5
 
 class BaseTeslaOptions:
 
@@ -26,9 +31,11 @@ class BaseTeslaOptions:
     def __init__(
 
             self, rotor_options: type(RotorOptions),
-            stator_options: type(StatorOptions)
+            stator_options: type(StatorOptions),
+            diffuser_options: type(DiffuserOptions) = DiffuserOptions,
 
     ):
 
         self.rotor = rotor_options()
         self.stator = stator_options()
+        self.diffuser = diffuser_options()

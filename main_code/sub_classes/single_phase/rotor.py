@@ -55,14 +55,9 @@ class SPRotor(BaseRotor):
         if self.gap_losses_control:
 
             # Evaluating Outlet Stator Pressure Loss
-            A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
-            A_out_sb = ((self.main_turbine.geometry.throat_width / np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) + self.geometry.gap / np.sin(
-                np.radians(90 - self.main_turbine.geometry.alpha1))) / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1)) -
-                    self.geometry.gap * np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
-                    np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.geometry.H_s
+            ratio = self.main_turbine.geometry.stator.a_ratio_discharge
 
-            rapporto = self.main_turbine.stator.geometry.Z_stat * A_out_sb / (2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s)
-            ke = (1 - A_in_sb / A_out_sb) ** 2
+            ke = (1 - ratio) ** 2
             dh = self.main_turbine.points[0].get_variable("h") - self.isentropic_inlet.get_variable("h")
             rho1 = self.main_turbine.static_points[1].get_variable("rho")
             v_1ss = np.sqrt(2 * dh)
@@ -85,7 +80,7 @@ class SPRotor(BaseRotor):
 
             # Evaluating Inlet Rotor Pressure Loss
             A_in_im = 2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s
-            A_out_im = self.geometry.n_discs * 2 * np.pi * (self.geometry.d_out / 2) * self.geometry.b_channel
+            A_out_im = self.geometry.n_channels * 2 * np.pi * (self.geometry.d_out / 2) * self.geometry.b_channel
             A2onA1 = (A_out_im / A_in_im)
             kc_1 = -0.12 * A2onA1 ** 4 + 1.02 * A2onA1 ** 3 - 1.28 * A2onA1 ** 2 - 0.12 * A2onA1 + 0.5
             DP_imbocco = 0.5 * kc_1 * rho_1_R_star * wr_1_R_star ** 2
