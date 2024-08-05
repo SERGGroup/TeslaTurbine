@@ -27,7 +27,7 @@ tt.points[0].set_variable("T", T_in)
 
 d_main = 0.2
 tt.geometry.H_s = 0.00094
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 rpm = np.linspace(4000, 7000, 10)
 
 # Design Parameters

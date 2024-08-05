@@ -28,7 +28,7 @@ tt.stator.stator_eff = 0.92
 
 tt.geometry.d_main = 0.2
 tt.geometry.H_s = 0.00094
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 
 # Design Parameters
 tt.geometry.rotor.d_ratio = 2.5
@@ -53,7 +53,7 @@ tt1.points[0].set_variable("T", T_in)
 
 tt1.geometry.d_main = tt.geometry.d_main
 tt1.geometry.H_s = tt.geometry.H_s
-tt1.geometry.alpha1 = tt.geometry.alpha1
+tt1.geometry.alpha_stat = tt.geometry.alpha_stat
 tt1.rotor.rpm = tt.rotor.rpm
 
 # Design Parameters

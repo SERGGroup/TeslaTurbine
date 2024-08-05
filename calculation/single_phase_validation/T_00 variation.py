@@ -29,7 +29,7 @@ tt.points[0].set_variable("P", P_in)
 
 tt.geometry.d_main = 0.2
 tt.geometry.H_s = 0.00094
-tt.geometry.alpha1 = 85
+tt.geometry.alpha_stat = 85
 tt.rotor.omega = 628.3185
 
 # Design Parameters
