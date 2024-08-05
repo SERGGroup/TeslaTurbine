@@ -1,6 +1,2 @@
-REFPROP-connector >= 0.3.11
-scipy
-pandas
-matplotlib
-numpy
+REFPROP-connector
 scipy

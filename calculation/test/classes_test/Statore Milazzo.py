@@ -75,7 +75,7 @@ for i in tqdm(range(len(P_out))):
     tt1.evaluate_performances()
 
     output_array1[i, 0] = P_out[i]
-    output_array1[i, 1] = tt1.eta_tt
+    output_array1[i, 1] = tt1.Eta_tesla_ss
     output_array1[i, 2] = tt1.work
     output_array1[i, 3] = tt1.power
     output_array1[i, 4] = tt1.rotor.rpm
@@ -101,12 +101,12 @@ for i in tqdm(range(len(P_out))):
     tt.evaluate_performances()
 
     output_array[i, 0] = P_out[i]
-    output_array[i, 1] = tt.eta_tt
+    output_array[i, 1] = tt.Eta_tesla_ss
     output_array[i, 2] = tt.work
     output_array[i, 3] = tt.power
     output_array[i, 4] = tt.rotor.rpm
     output_array[i, 5] = tt.stator.m_dot_s
-    output_array[i, 6] = tt.stator.speed_out.v
+    output_array[i, 6] = tt.stator.out_speed
     output_array[i, 7] = tt.points[1].get_variable("P")
     output_array[i, 8] = tt.points[1].get_variable("P") - tt.points[2].get_variable("P")
     output_array[i, 9] = tt.static_points[1].get_variable("P")

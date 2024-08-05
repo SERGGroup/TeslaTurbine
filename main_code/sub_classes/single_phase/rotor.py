@@ -11,7 +11,7 @@ class SPRotorStep(BaseRotorStep):
 
     def get_variations(self, dr):
 
-        rho = self.static_point.get_variable("rho")
+        rho = self.thermo_point.get_variable("rho")
         r_new = self.new_pos.r
         u = self.speed.u
         wt = self.speed.wt
@@ -22,7 +22,7 @@ class SPRotorStep(BaseRotorStep):
         dvr = vr_new - self.speed.vr
 
         coef = 6.5
-        mu = self.static_point.get_variable("visc")
+        mu = self.thermo_point.get_variable("visc")
         ni = mu / rho
 
         wtFG = wt - dr * (-(10 / coef) * omega - (ni * 60 / (-vr_new * coef * self.geometry.b_channel ** 2) + 1 / r_new) * wt)
@@ -30,11 +30,10 @@ class SPRotorStep(BaseRotorStep):
         dwt = -dr *(-(10 / coef) * omega - (ni * 60/(-vr_new * coef * self.geometry.b_channel ** 2)+1 / r_new) * wt_c)
         wt_new = self.speed.wt + dwt
 
-        dp = - dr * rho * ( omega ** 2 * r_new + 2 * wt_new * omega * coef / 6 + coef ** 2 / 30 * wt_new ** 2 / r_new - coef ** 2 / 30 *
+        dP = - dr * rho * ( omega ** 2 * r_new + 2 * wt_new * omega * coef / 6 + coef ** 2 / 30 * wt_new ** 2 / r_new - coef ** 2 / 30 *
                     vr_new * dvr / dr + 2 * coef * ni * vr_new / self.geometry.b_channel ** 2)
 
-        dvt = dwt + self.main_rotor.omega * dr
-        return dvr, dvt, dp, 0.
+        return dvr, dwt, dP, 0.
 
     def solve(self):
 
@@ -56,10 +55,11 @@ class SPRotor(BaseRotor):
 
             # Evaluating Outlet Stator Pressure Loss
             A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
-            A_out_sb = ((self.main_turbine.geometry.throat_width / np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) + self.geometry.gap / np.sin(
-                np.radians(90 - self.main_turbine.geometry.alpha1))) / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1)) -
-                    self.geometry.gap * np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
-                    np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.geometry.H_s
+            # A_out_sb = ((self.main_turbine.geometry.throat_width / np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) + self.geometry.gap / np.sin(
+            #     np.radians(90 - self.main_turbine.geometry.alpha1))) / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1)) -
+            #         self.geometry.gap * np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
+            #         np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.geometry.H_s
+            A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
 
             rapporto = self.main_turbine.stator.geometry.Z_stat * A_out_sb / (2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s)
             ke = (1 - A_in_sb / A_out_sb) ** 2
@@ -72,7 +72,7 @@ class SPRotor(BaseRotor):
             # Evaluating Thermodynamic Conditions After Stator Loss
             P_01_R_star = self.main_turbine.points[1].get_variable("P") - DP_sbocco
             h_01_R_star = self.main_turbine.points[1].get_variable("h")               # Total Enthalpy Conservation
-            h_1_R_star = self.main_turbine.static_points[1].get_variable("h")         # The Loss is Considered Iso-Enthalpic
+            h_1_R_star = h_01_R_star - 0.5 * v_1s ** 2         # The Loss is Considered Iso-Enthalpic
 
             self.intermediate_gap_point.set_variable("h", h_01_R_star)
             self.intermediate_gap_point.set_variable("P", P_01_R_star)
@@ -93,12 +93,12 @@ class SPRotor(BaseRotor):
             # Evaluating Thermodynamic Conditions After Rotor Loss
             P_01_R = P_01_R_star - DP_imbocco
             h_01_R = h_01_R_star
-            h_1_R = h_1_R_star
+            h_1_R = h_01_R - 0.5 * v_1s ** 2
 
             self.main_turbine.points[2].set_variable("P", P_01_R)
             self.main_turbine.points[2].set_variable("h", h_01_R)
 
-            self.main_turbine.static_points[2].set_variable("P", P_01_R_star)
+            self.main_turbine.static_points[2].set_variable("P", P_01_R - 0.5 * rho_1_R_star * v_1s ** 2)
             self.main_turbine.static_points[2].set_variable("h", h_1_R)
 
             # Evaluating Speed after Rotor Loss

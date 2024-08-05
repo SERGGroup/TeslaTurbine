@@ -63,14 +63,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine1.evaluate_performances()
 
     output_array1[i, 0] = dv_perc[i]
-    output_array1[i, 1] = tesla_turbine1.eta_tt
+    output_array1[i, 1] = tesla_turbine1.Eta_tesla_ss
     output_array1[i, 2] = tesla_turbine1.work
     output_array1[i, 3] = tesla_turbine1.power
     output_array1[i, 4] = tesla_turbine1.rotor.rpm
     output_array1[i, 5] = tesla_turbine1.stator.m_dot_s
     output_array1[i, 6] = tesla_turbine1.points[1].get_variable("rho")
     output_array1[i, 7] = tesla_turbine1.static_points[1].get_variable("p")
-    output_array1[i, 8] = tesla_turbine1.stator.speed_out.v
+    output_array1[i, 8] = tesla_turbine1.stator.out_speed
 
 py_df = pd.DataFrame(output_array1, columns=['dv_perc', 'Eta_Tesla_ss', 'Work', 'Power', 'RPM', 'm_dot', 'rho_1', 'P_1', 'v'])
 
@@ -87,14 +87,14 @@ for i in tqdm(range(len(dv_perc))):
     tesla_turbine2.evaluate_performances()
 
     output_array2[i, 0] = dv_perc[i]
-    output_array2[i, 1] = tesla_turbine2.eta_tt
+    output_array2[i, 1] = tesla_turbine2.Eta_tesla_ss
     output_array2[i, 2] = tesla_turbine2.work
     output_array2[i, 3] = tesla_turbine2.power
     output_array2[i, 4] = tesla_turbine2.rotor.rpm
     output_array2[i, 5] = tesla_turbine2.stator.m_dot_s
     output_array2[i, 6] = tesla_turbine2.points[1].get_variable("rho")
     output_array2[i, 7] = tesla_turbine2.static_points[1].get_variable("p")
-    output_array2[i, 8] = tesla_turbine2.stator.speed_out.v
+    output_array2[i, 8] = tesla_turbine2.stator.out_speed
 
 py_df2 = pd.DataFrame(output_array2, columns=['dv_perc', 'Eta_Tesla_ss', 'Work', 'Power', 'RPM', 'm_dot', 'rho_1', 'P_1', 'v'])
 

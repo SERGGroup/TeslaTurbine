@@ -2,12 +2,13 @@
 from REFPROPConnector import ThermodynamicPoint as TP
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 # %%------------       DATA                        -----------------------------------------------------------> #
 n = 100
 P_in = 997233                 # [Pa]
 x_in = 0                      # [-]
-P_out = 652161                # [Pa]
+P_out = 900000                # [Pa]
 eta_stat = 0.9               # [-]
 H_s = 0.0005                  # [m]
 throat_width = 0.003          # [m]
@@ -93,8 +94,26 @@ Phi = v_out / v1ss
 
 # %%------------              PLOT                        -----------------------------------------------------------> #
 
-fig = plt.subplots()
-plt.plot(Ph, m_dot_arr, linestyle= "-", color='darkblue', linewidth = '1.5')
+fig, ax1 = plt.subplots(constrained_layout=True)
+
+ax1.plot(Ph, m_dot_arr, label='Mass Flow Rate', color='Darkblue')
+ax1.set_xlabel('Back Pressure [Pa]')
+ax1.set_ylabel('Mass Flow Rate [kg/s]')
+ax1.set_ylim((0, 0.06))
+ax1.set_xlim((900000, 1000000))
+ax1.xaxis.grid()
+ax1.yaxis.grid()
+
+ax2 = ax1.twinx()
+ax2.plot(Ph, rhov, label='rho * v', color='Darkred')
+ax2.set_ylabel('rho * v [kg/(m2s)]')
+ax2.set_ylim((3000, 12000))
+ax2.yaxis.set_major_locator(ticker.MultipleLocator(1500))
+
+
+fig.legend(loc=(0.12, 0.12), edgecolor='black')
+
+
 plt.show()
 
 

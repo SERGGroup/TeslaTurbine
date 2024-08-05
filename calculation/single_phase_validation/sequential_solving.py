@@ -1,5 +1,5 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
-from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometry, SPTeslaOptions
+from main_code.sub_classes.single_phase import SPStator, SPRotor, SPTeslaGeometry, SPTeslaOptions, SPStatorMil
 from main_code.base_classes import BaseTeslaTurbine, CALCULATION_FOLDER
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -108,7 +108,7 @@ rel_errors_df = pd.DataFrame(rel_errors)
 # %%------------             TRAJECTORY PLOT                        -------------------------------------------------> #
 fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
 
-ax.plot(rotor_array[:, 24] *np.pi / 180, rotor_array[:, 1])
+ax.plot(rotor_array[:, 24] * np.pi / 180, rotor_array[:, 1])
 ax.set_rmax(0.1)
 ax.set_rticks([0.025, 0.05, 0.075, 0.1])
 ax.set_rlabel_position(-22.5)

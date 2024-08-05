@@ -134,6 +134,7 @@ class SPStatorMil(BaseStator0D):
         self.phi_n = 0.
         self.v1_ss = 0.
         self.out_speed = 0.
+        self.A_throat = 0.
 
     def initialization(self):
 
@@ -160,7 +161,7 @@ class SPStatorMil(BaseStator0D):
         Ph = np.linspace(self.stator_mil_in.get_variable("p") - 100, self.stator_mil_out.get_variable("p"), n)
         Ss = np.linspace(self.stator_mil_in.get_variable("s"), self.stator_mil_in.get_variable("s"), n)
 
-        A_throat = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
+        self.A_throat = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
 
         rhov_throat = 0.
         i_max = 0.
@@ -195,13 +196,13 @@ class SPStatorMil(BaseStator0D):
                 v_sound = v[i]
                 rhov_throat = rhov[i]
 
-            m_dot_s_in = self.main_turbine.geometry.stator.Z_stat * A_throat * rhov_throat
+            m_dot_s_in = self.main_turbine.geometry.stator.Z_stat * self.A_throat * rhov_throat
             m_dot_arr[i] = m_dot_s_in
 
         h_out = self.stator_mil_in.get_variable("h") - (v_sound ** 2) / 2
-        v = v_sound
+        # v = v_sound
 
-        self.m_dot_s = self.main_turbine.geometry.stator.Z_stat * A_throat * rhov_throat
+        self.m_dot_s = self.main_turbine.geometry.stator.Z_stat * self.A_throat * rhov_throat
 
         return v_sound, h_out
 

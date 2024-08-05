@@ -44,7 +44,7 @@ for i in range(len(INLET_T)):
 
     output_array1[i, 1] = tt1.stator.m_dot_s
     output_array1[i, 2] = tt1.stator.stator_eff
-    output_array1[i, 3] = tt1.stator.speed_out.v
+    output_array1[i, 3] = tt1.stator.out_speed
     output_array1[i, 4] = tt1.stator.x_out
     output_array1[i, 5] = tt1.stator.x_in
     output_array1[i, 6] = tt1.stator.phi_n

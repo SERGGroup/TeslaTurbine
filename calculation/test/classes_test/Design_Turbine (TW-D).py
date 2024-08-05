@@ -50,7 +50,7 @@ for i in tqdm(range(len(D_main))):
 
         output_array[len(TW) * i + j, 0] = D_main[i]
         output_array[len(TW) * i + j, 1] = TW[j]
-        output_array[len(TW) * i + j, 2] = tt.eta_tt
+        output_array[len(TW) * i + j, 2] = tt.Eta_tesla_ss
         output_array[len(TW) * i + j, 3] = tt.work
         output_array[len(TW) * i + j, 4] = tt.power
 

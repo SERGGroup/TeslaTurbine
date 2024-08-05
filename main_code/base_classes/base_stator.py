@@ -62,8 +62,6 @@ class BaseStator0D(ABC):
 
     def __evaluate_m_dot_max(self):
 
-        # TODO
-
         h_in = self.input_point.get_variable("h")
         s_in = self.input_point.get_variable("s")
 
@@ -153,10 +151,7 @@ class BaseStatorStep(ABC):
         self.options = main_stator.options
 
         self.speed = speed
-        self.total_point = self.main_stator.input_point.duplicate()
-        self.static_point = self.main_stator.input_point.duplicate()
-
-        self.total_enthalpy = self.main_stator.input_point.get_variable("H")
+        self.thermo_point = self.main_stator.input_point.duplicate()
 
     @property
     def pos(self):
@@ -185,16 +180,12 @@ class BaseStatorStep(ABC):
         # Init a new step
         new_class = self.self_class()
         new_step = new_class(main_stator=self.main_stator, speed=new_speed)
-        new_step.total_enthalpy = self.total_enthalpy + dh
 
         # Update Thermodynamic Point
-        p_new = self.static_point.get_variable("P") + dp
-        h_new = new_step.total_enthalpy - new_speed.v ** 2
-        new_step.static_point.set_variable("P", p_new)
-        new_step.static_point.set_variable("H", h_new)
-
-        total_point = new_step.total_point.get_stagnation_point(speed=new_speed.v)
-        total_point.copy_state_to(new_step.total_point)
+        p_new = self.thermo_point.get_variable("P") + dp
+        h_new = self.thermo_point.get_variable("H") + dh
+        new_step.thermo_point.set_variable("P", p_new)
+        new_step.thermo_point.set_variable("H", h_new)
 
         return new_step
 
@@ -206,7 +197,6 @@ class BaseStatorStep(ABC):
     @abstractmethod
     def get_variations(self, ds):
 
-        """Evaluate changes in speed, STATIC pressure and TOTAL enthalpy (for adiabatic expansion consider dh = 0)"""
         return 0., 0., 0., 0.
 
     def __init_subclass__(cls, *args, **kwargs):
@@ -231,16 +221,7 @@ class BaseStator1D(BaseStator0D):
 
     def solve(self):
 
-        # if self.options.iterate_flow_rate:
-        #   inizzializza la portata
-        #   while true:
-        #     p_out_curr = self.evaluate_output_pressure()
-        #     if ...
-        #        break;
-        # else:
-        #
-        #   p_out_curr = self.evaluate_output_pressure()
-        #
+        # TODO INITIALIZATION
         # flow rate -> initial speed
 
         first_pos = Position(self.geometry.d_0, omega=0.)
@@ -264,6 +245,3 @@ class BaseStator1D(BaseStator0D):
 
         if self.options.profile_stator:
             self.stator_points.append(new_step)
-
-        new_step.total_point.copy_state_to(self.main_turbine.points[1])
-        new_step.static_point.copy_state_to(self.main_turbine.static_points[1])

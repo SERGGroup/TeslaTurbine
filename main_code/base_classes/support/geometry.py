@@ -4,14 +4,13 @@ import numpy as np
 class RotorGeometry:
 
     d_ratio = 3
-    b_channel = 0.00007
+    b_channel = 0.0001
     roughness = 0.000001
     n_channels = 50
     n_packs = 50
     n_discs = 2
     gap = 0.0004
     alpha_1PS = 78.503
-    disc_thickness = 0.0008
 
     def __init__(self, main_geom):
 
@@ -42,21 +41,6 @@ class RotorGeometry:
     def dr_tot(self):
 
         return self.r_out - self.r_int
-
-    @property
-    def a_int(self):
-
-        return np.pi / 4 * self.d_int ** 2
-
-    @property
-    def a_ext(self):
-
-        return 2 * np.pi * self.b_channel * self.r_out
-
-    @property
-    def a_ratio_inlet(self):
-
-        return self.b_channel / (self.disc_thickness + self.b_channel)
 
 
 class StatorGeometry:
@@ -209,6 +193,7 @@ class BaseTeslaGeometry:
     H_s = 0.
     throat_width = 0.0004934
     alpha1 = 85
+    disc_thickness = 0.0008
 
     def __init__(
 
@@ -221,4 +206,4 @@ class BaseTeslaGeometry:
         self.stator = stator_geometry(self)
         self.rotor = rotor_geometry(self)
 
-        self.H_s = (self.rotor.n_discs - 1) * self.rotor.disc_thickness + self.rotor.n_discs * self.rotor.b_channel
+        self.H_s = (self.rotor.n_discs - 1) * self.disc_thickness + self.rotor.n_discs * self.rotor.b_channel

@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 3
+n_setpoints = 4
 D_ref = 0.35     # [m]
 b_ref = 0.001   # [m]
-D_turb_list = np.linspace(0.55, 1.45, n_setpoints) * D_ref
-b_channel_list = np.linspace(0.3, 1, n_setpoints) * b_ref
+D_turb_list = np.linspace(0.55, 2.5, n_setpoints) * D_ref
+b_channel_list = np.linspace(1, 50, n_setpoints) * b_ref
 D_turb, b_channel = np.meshgrid(D_turb_list, b_channel_list)
 
 curr_options = TPTeslaOptions()
@@ -26,7 +26,9 @@ P_in = 997233         # [Pa]
 x_in = 0              # [-]
 P_out = 427308        # [Pa]
 
-dv_perc = np.linspace(-0.8, 0.3, 15)
+m_refr = 3.336        # [kg/s]
+
+dv_perc = np.linspace(-0.8, 0.3, 4)
 
 output_array_list = list()
 rotor_array_max_efficiency_list = list()
@@ -37,6 +39,7 @@ Power = np.empty(len(dv_perc) * len(D_turb_list) * len(b_channel_list))
 
 Eta_max_arr = np.empty(len(D_turb_list) * len(b_channel_list))
 Power_max_arr = np.empty(len(D_turb_list) * len(b_channel_list))
+
 
 # %%------------   CALCULATION                             ----------------------------------------------------------> #
 
@@ -59,7 +62,7 @@ for i in tqdm(range(n_setpoints)):
         max_power = 0.
         output_array = np.empty((len(dv_perc), 9))
 
-        for p in range(len(dv_perc)):
+        for p in tqdm(range(len(dv_perc))):
 
             new_turbine.rotor.dv_perc = dv_perc[p]
 
@@ -73,7 +76,7 @@ for i in tqdm(range(n_setpoints)):
             new_turbine.iterate_pressure()
             new_turbine.evaluate_performances()
 
-            Eta[p + p_0] = new_turbine.eta_tt
+            Eta[p + p_0] = new_turbine.Eta_tesla_ss
             Power[p + p_0] = new_turbine.power
 
             if Eta[p + p_0] > max_efficiency or p == 0:
@@ -85,14 +88,14 @@ for i in tqdm(range(n_setpoints)):
                 max_power = Power[p + p_0]
 
             output_array[p, 0] = dv_perc[p]
-            output_array[p, 1] = new_turbine.eta_tt
+            output_array[p, 1] = new_turbine.Eta_tesla_ss
             output_array[p, 2] = new_turbine.work
             output_array[p, 3] = new_turbine.power
             output_array[p, 4] = new_turbine.rotor.rpm
             output_array[p, 5] = new_turbine.stator.m_dot_s
             output_array[p, 6] = new_turbine.points[1].get_variable("rho")
             output_array[p, 7] = new_turbine.static_points[1].get_variable("p")
-            output_array[p, 8] = new_turbine.stator.speed_out.v
+            output_array[p, 8] = new_turbine.stator.out_speed
 
         output_array_list.append(output_array)
         rotor_array_max_efficiency_list.append(rotor_array_max_efficiency)

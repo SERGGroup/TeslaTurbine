@@ -14,25 +14,40 @@ class BearingLoss:
     nu = 0.
     d = 0.
     D = 0.
-    dm = (d + D) / 2
-    d_turb = 0.
-    l_turb = 0.
+    dm = 0.
+    volume = 0.
     m_dot = 0.
     v = 0.
     p = 0.
     A_out = 0.
 
+    # # Spherical Roller Bearings Coefficients
+    # R1 = 1.6 * 10 ** (-6)
+    # R2 = 5.84
+    # R3 = 2.81 * 10 ** (-6)
+    # R4 = 5.8
+    #
+    # S1 = 3.62 * 10 ** (-3)
+    # S2 = 508
+    # S3 = 8.8 * 10 ** (-3)
+    # S4 = 117
 
     # Spherical Roller Bearings Coefficients
-    R1 = 1.6 * 10 ** (-6)
-    R2 = 5.84
-    R3 = 2.81 * 10 ** (-6)
-    R4 = 5.8
+    R1 = 1.32 * 10 ** (-6)
+    R2 = 1.57
+    R3 = 1.97 * 10 ** (-6)
+    R4 = 3.21
 
-    S1 = 3.62 * 10 ** (-3)
-    S2 = 508
-    S3 = 8.8 * 10 ** (-3)
-    S4 = 117
+    S1 = 4.53 * 10 ** (-3)
+    S2 = 0.26
+    S3 = 0.1 * 10 ** (-3)
+    S4 = 0.6
+
+    # Reference Force Values
+    F_r_ref = 2 * 9.81  # [N]
+    D_ref = 0.12  # [m]
+    L_ref = 0.1  # [m]
+
 
     def __init__(self):
 
@@ -41,15 +56,16 @@ class BearingLoss:
         self.M_seal = 0.
         self.M_drag = 0.
         self.M_lost = 0.
-        self.n_bearings = 0
+        self.n_bearings = 2
+
+        self.F_r = 0.
+        self.F_a = 0.
+
+    def evaluate_force(self):
 
         # Radial Force is calculated by scaling the one of the lab-scale Tesla prototype
-        self.F_r_ref = 2 * 9.81  # [N]
-        self.D_ref = 0.12        # [m]
-        self.L_ref = 0.1         # [m]
-
-        self.F_r = (self.F_r_ref * (self.d_turb ** 2 / self.D_ref ** 2) * (self.l_turb / self.L_ref)) / self.n_bearings
-        self.F_a = 0.5 * (self.m_dot * self.v + self.p * self.A_out)
+        self.F_r = (self.F_r_ref * self.volume / (np.pi * self.D_ref ** 2 / 4 * self.L_ref)) / self.n_bearings
+        self.F_a = self.m_dot * self.v + self.p * self.A_out
 
     def __evaluate_mrr(self):
 
@@ -70,7 +86,7 @@ class BearingLoss:
         phi_ihs = 1 / (1 + 1.84 * 10 ** (-9) * (self.n * self.dm) ** 1.28 * self.nu ** 0.64)
         phi_rs = 1 / np.exp(K_rs * self.nu * (self.d + self.D) * np.sqrt(K_z / (2 * (self.D - self.d))))
 
-        G_rr = np.min(self.R1 * self.dm ** 1.85 * (self.F_r + self.R2 * self.F_a) ** 0.54, self.R3 * self.dm ** 2.3 * (
+        G_rr = np.minimum(self.R1 * self.dm ** 1.85 * (self.F_r + self.R2 * self.F_a) ** 0.54, self.R3 * self.dm ** 2.3 * (
                 self.F_r + self.R4 * self.F_a) ** 0.31)
 
         self.M_rr = phi_ihs * phi_rs * G_rr * (self.nu * self.n) ** 0.6
@@ -93,7 +109,7 @@ class BearingLoss:
         phi_bl = 1 / np.exp(2.6 * 10 ** (-8) * (self.nu * self.n) ** 1.4 * self.dm)
         mu_sl = phi_bl * mu_bl + (1 - phi_bl) * mu_ehl
 
-        G_sl = np.min(self.S1 * self.dm ** 0.25 * (self.F_r ** 4 + self.S2 * self.F_a ** 4) ** 0.33, self.S3 * self.dm ** 0.94 * (self.F_r ** 3 + self.S4 * self.F_a ** 3) ** 0.33)
+        G_sl = np.minimum(self.S1 * self.dm ** 0.25 * (self.F_r ** 4 + self.S2 * self.F_a ** 4) ** 0.33, self.S3 * self.dm ** 0.94 * (self.F_r ** 3 + self.S4 * self.F_a ** 3) ** 0.33)
 
         self.M_sl = mu_sl + G_sl
 
@@ -106,6 +122,7 @@ class BearingLoss:
         pass
 
     def evaluate_bearing_losses(self):
+        self.evaluate_force()
 
         self.__evaluate_msl()
         self.__evaluate_mrr()

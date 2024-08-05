@@ -59,7 +59,7 @@ for i in tqdm(range(len(D_ratio))):
     tt.evaluate_rotor_performances()
 
     output_array[i, 0] = D_ratio[i]
-    output_array[i, 1] = tt.rotor.eta_tt
+    output_array[i, 1] = tt.Eta_rotor_ss
     output_array[i, 2] = tt.work
     output_array[i, 3] = tt.power
     output_array[i, 4] = tt.rotor.rpm

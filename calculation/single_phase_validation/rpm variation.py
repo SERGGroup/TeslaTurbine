@@ -50,7 +50,7 @@ for i in tqdm(range(len(rpm))):
     tt.evaluate_performances()
 
     output_array[i, 0] = rpm[i]
-    output_array[i, 1] = tt.eta_tt
+    output_array[i, 1] = tt.Eta_tesla_ss
     output_array[i, 2] = tt.Eta_tesla_ss_dh
     output_array[i, 3] = tt.work
     output_array[i, 4] = tt.power
