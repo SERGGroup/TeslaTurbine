@@ -14,13 +14,17 @@ class BaseRotorStep(ABC):
         # self.thermo_point = self.main_rotor.input_point
         self.thermo_point = self.main_rotor.input_point.duplicate()
 
-        self.thermo_point.set_variable('rho', self.main_rotor.input_point.get_variable('rho'))
-        self.thermo_point.set_variable('P', self.main_rotor.input_point.get_variable('P'))
-        #
-        # if self.main_rotor.input_point.get_variable("x") == 0:
-        #     self.thermo_point.set_variable("x", 0.000000001)
-        # else:
-        #     self.thermo_point.set_variable("x", self.main_rotor.input_point.get_variable("x"))
+        if self.main_rotor.options.sp_check == True:
+            self.thermo_point.set_variable('rho', self.main_rotor.input_point.get_variable('rho'))
+            self.thermo_point.set_variable('P', self.main_rotor.input_point.get_variable('P'))
+
+        else:
+
+            self.thermo_point.set_variable('P', self.main_rotor.input_point.get_variable('P'))
+            if self.main_rotor.input_point.get_variable("x") == 0:
+                self.thermo_point.set_variable("x", 0.000000001)
+            else:
+                self.thermo_point.set_variable("x", self.main_rotor.input_point.get_variable("x"))
 
         self.geometry = self.main_rotor.geometry
         self.__omega = 0.
@@ -134,6 +138,9 @@ class BaseRotor(ABC):
         self.evaluate_gap_losses()
 
         self.input_point = self.main_turbine.static_points[2].duplicate()
+
+        self.input_point.set_variable("h", self.main_turbine.static_points[2].get_variable("h"))
+        self.input_point.set_variable("p", self.main_turbine.static_points[2].get_variable("p"))
 
         first_pos = Position(self.geometry.r_out, self.omega)
         self.first_speed = Speed(position=first_pos)

@@ -202,13 +202,13 @@ class BaseTeslaTurbine:
         self.static_points[0].copy_state_to(self.isentropic_total_outlet)
         self.static_points[0].copy_state_to(self.isentropic_static_outlet)
 
-        self.isentropic_total_outlet.set_variable("s", self.points[2].get_variable("s"))
+        self.isentropic_total_outlet.set_variable("s", self.points[0].get_variable("s"))
         self.isentropic_total_outlet.set_variable("p", self.points[3].get_variable("p"))
 
-        self.isentropic_static_outlet.set_variable("s", self.static_points[2].get_variable("s"))
+        self.isentropic_static_outlet.set_variable("s", self.static_points[0].get_variable("s"))
         self.isentropic_static_outlet.set_variable("p", self.static_points[3].get_variable("p"))
 
-        self.Eta_tesla_ts = (self.points[0].get_variable("h")-self.static_points[3].get_variable("h")) / (
+        self.Eta_tesla_ts = (self.points[0].get_variable("h")-self.points[3].get_variable("h")) / (
                 self.points[0].get_variable("h") - self.isentropic_static_outlet.get_variable("h"))
 
         self.Eta_rotor_tt = (self.points[0].get_variable("h") - self.points[3].get_variable("h")) / (
@@ -221,6 +221,7 @@ class BaseTeslaTurbine:
         self.work2 = self.points[2].get_variable("h") - self.points[3].get_variable("h")
         self.power = self.work * self.rotor.m_dot_ch
 
+        self.Eta_tesla_tt = self.work2 / (self.points[0].get_variable("h") - self.isentropic_total_outlet.get_variable("h"))
         self.Eta_tesla_tt2 = self.work / (self.points[0].get_variable("h") - self.isentropic_total_outlet.get_variable("h"))
 
     def evaluate_bearing_performances(self, M_lost):

@@ -32,13 +32,12 @@ curr_geometry.d_main = 0.15  # [m]
 
 tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=SPStatorMil, rotor=SPRotor)
 
-tt.rotor.gap_losses_control = False
 tt.rotor.rpm = 15000
 
 Z_stat = 1
 tt.geometry.stator.Z_stat = Z_stat
 
-throat_width = 0.00115
+throat_width = 0.00114
 tt.geometry.throat_width = throat_width
 
 tt.geometry.disc_thickness = 0.0001
@@ -65,7 +64,6 @@ rotor_array = tt.rotor.get_rotor_array()
 
 
 # %%------------             TRAJECTORY PLOT                        -------------------------------------------------> #
-plt.rcParams['figure.constrained_layout.use'] = True
 fig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={"projection": "polar"})
 
 ax1.plot(rotor_array[:, 24] * np.pi / 180, rotor_array[:, 1], zorder=1, color='Darkblue', linewidth='1.3')
@@ -88,36 +86,53 @@ ax2.grid(True)
 
 ax2.set_title("Relative Reference Frame")
 
+fig.tight_layout()
 plt.show()
 
 
 # %%------------             VELOCITY PLOT                        ---------------------------------------------------> #
 
 plt.rcParams['figure.constrained_layout.use'] = True
-fig1, (ax3, ax4) = plt.subplots(1, 2, figsize=(11, 6))
+fig1, (ax3, ax4) = plt.subplots(1, 2, figsize=(9, 5))
 
 # Absolute Velocities
-ax3.plot(rotor_array[1:, 1], rotor_array[1:, 3], label="Absolut Tangential Speed Vt", color = "Darkred")
-ax3.plot(rotor_array[1:, 1], rotor_array[1:, 4], label="Absolut Radial Speed Vr", color = "Darkgreen")
+ax3.plot(rotor_array[1:, 1], rotor_array[1:, 3], label="Tangential Speed Vt", color = "Darkred")
+ax3.plot(rotor_array[1:, 1], rotor_array[1:, 4], label="Radial Speed Vr", color = "Darkgreen")
 ax3.plot(rotor_array[1:, 1], rotor_array[1:, 2], label="Rotational Speed U", color = "Darkblue")
 
-ax3.set_xlim(0.02, 0.08)
-ax3.set_xlabel("Radial Distance [m]", color = "Black", fontsize = 14)
-ax3.set_ylabel("Velocity [m/s]", color = "Black", fontsize = 14)
-ax3.legend(edgecolor = "Black", fontsize = 12)
+ax3.set_xlim(0.025, 0.075)
+ax3.set_ylim(0, 225)
+
+ax3.set_xlabel("Radial Position [m]", color="Black", fontsize=14)
+ax3.set_ylabel("Velocity [m/s]", color="Black", fontsize=14)
+ax3.legend(edgecolor="Black", fontsize=12)
 ax3.grid()
 
+# Pressure
+ax4.plot(rotor_array[1:, 1], rotor_array[1:, 11] / 100000, label="Static Pressure", color="black")
 
-# Relative Velocities
-ax4.plot(rotor_array[1:, 1], rotor_array[1:, 5], label="Relative Tangential Speed Wt", color = "Darkred")
-ax4.plot(rotor_array[1:, 1], rotor_array[1:, 6], label="Relative Radial Speed Wr", color = "Darkgreen")
-ax4.plot(rotor_array[1:, 1], rotor_array[1:, 2], label="Rotational Speed U", color = "Darkblue")
+ax4.set_xlabel("Radial Position [m]", color = "Black", fontsize = 14)
+ax4.set_ylabel("Static Pressure [bar]", color = "Black", fontsize = 14)
 
-ax4.set_xlim(0.02, 0.08)
-ax4.set_xlabel("Radial Distance [m]", color = "Black", fontsize = 14)
-ax4.set_ylabel("Velocity [m/s]", color = "Black", fontsize = 14)
-ax4.legend(edgecolor = "Black", fontsize = 12)
+ax4.set_xlim(0.025, 0.075)
+ax4.set_ylim(38, 50)
 ax4.grid()
 
+plt.show()
+
+# %%------------             VELOCITY PLOT                        ---------------------------------------------------> #
+fig2, ax = plt.subplots(figsize=(5,4))
+
+ax.plot(rotor_array[1:, 1], rotor_array[1:, 3], label="Tangential Speed Vt", color = "Darkred")
+ax.plot(rotor_array[1:, 1], rotor_array[1:, 4], label="Radial Speed Vr", color = "Darkgreen")
+ax.plot(rotor_array[1:, 1], rotor_array[1:, 2], label="Rotational Speed U", color = "Darkblue")
+
+ax.set_xlim(0.025, 0.075)
+ax.set_ylim(0, 225)
+
+ax.set_xlabel("Radial Position [m]", color="Black", fontsize=14)
+ax.set_ylabel("Velocity [m/s]", color="Black", fontsize=14)
+ax.legend(edgecolor="Black", fontsize=12)
+ax.grid()
 
 plt.show()

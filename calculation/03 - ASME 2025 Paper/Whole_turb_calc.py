@@ -8,13 +8,14 @@ from scipy.ndimage.filters import gaussian_filter
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 4
+# The design parameters analyzed here are throat width and dv_perc. This section of code define their range of variation
+n_setpoints = 8
 dv_perc_list = np.linspace(-0.4, 0.2, n_setpoints)
 TW_ref = 0.00114  # [m]
 TW_list = np.linspace(0.8, 1.2, n_setpoints) * TW_ref
 dv_perc, TW = np.meshgrid(dv_perc_list, TW_list)
 
-# Input Constraints Data
+# Input Thermodynamic Data
 P_in = 10100000  # [Pa]
 P_out = 3900000         # [Pa]
 T_in_c = 94  # [°C]
@@ -22,6 +23,7 @@ T_in = T_in_c + 273.15  # [K]
 
 m_rif = 0.1             # [kg/s]
 
+# Initializing output arrays
 output_array_list = list()
 rotor_array_max_efficiency_list = list()
 rotor_array_max_power_list = list()
@@ -64,14 +66,14 @@ for i in tqdm(range(n_setpoints)):
         curr_options.rotor.sp_check = True
         curr_options.rotor.n_rotor = 4000
 
-        # Main design Parameters
-        curr_geometry.rotor.b_channel = 0.00005
+        # These are the other design parameters. In this case, they're kept constant (only tw and dv_perc are variating)
+        curr_geometry.rotor.b_channel = 0.00005 # [m]
         curr_geometry.rotor.d_ratio = 3  # [m]
         curr_geometry.d_main = 0.15  # [m]
 
+        # Initializing the turbine
         tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=SPStatorMil, rotor=SPRotor)
 
-        tt.rotor.gap_losses_control = False
         tt.rotor.dv_perc = dv_perc[i,j]
 
         Z_stat = 1
@@ -98,10 +100,12 @@ for i in tqdm(range(n_setpoints)):
         tt.P_out = P_out
         tt.T_in = T_in
 
+        # This is the section where the calculation is performed
         tt.iterate_pressure()
         tt.evaluate_performances()
         rotor_array = tt.rotor.get_rotor_array()
 
+        # This is just a check conditions to avoid numerical problems (i.e. negative efficiency or higher than 100%
         if tt.Eta_tesla_ss < 1 and tt.Eta_tesla_ss > 0:
 
             Eta[j + j_0] = tt.Eta_tesla_ss
@@ -134,6 +138,7 @@ for i in tqdm(range(n_setpoints)):
             output_array[j + j_0, 10] = np.nan
             output_array[j + j_0, 11] = np.nan
 
+    # Exporting results in the arrays
     if tt.Eta_tesla_ss < 1 and tt.Eta_tesla_ss > 0:
 
         Eta_arr[i * n_setpoints + j] = tt.Eta_tesla_tt2
@@ -146,6 +151,7 @@ for i in tqdm(range(n_setpoints)):
         Power_arr[i * n_setpoints + j] = np.nan
         RPM_arr[i * n_setpoints + j] = np.nan
 
+# Reshaping arrays for the final plots
 Eta_res = Eta_arr.reshape(dv_perc.shape)
 Power_res = Power_arr.reshape(dv_perc.shape)
 RPM_res = RPM_arr.reshape(dv_perc.shape)

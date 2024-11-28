@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 30
+n_setpoints = 8
 D_ref = 0.35  # [m]
 b_ref = 0.001  # [m]
 D_turb_list = np.linspace(0.55, 1.43, n_setpoints) * D_ref

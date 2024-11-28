@@ -65,7 +65,7 @@ alpha_rad_in = inlet_speed.alpha
 alpha_deg_in = alpha_rad_in / np.pi * 180
 
 tt.stator.m_dot_s = m_dot
-tt.geometry.rotor.n_channels = 1
+tt.m_dot_tot = m_dot
 
 # %%--------------------         CALCULATIONS             ----------------------------------------------------------> #
 
@@ -78,9 +78,6 @@ parameters = ['it', 'Radius [m]', 'u [m/s]', 'vt [m/s]', 'vr [m/s]', 'wt [m/s]',
               'x [-]', '-', '-', '-', 'theta [°]', 'gamma [°]', '-', 'theta90 [°]', 'theta180 [°]', 'theta270 [°]']
 rotor_df = pd.DataFrame(rotor_array, columns=parameters)
 
-# RESULTS_FOLDER = os.path.dirname('C:/Users/iggig/PycharmProjects/TeslaTurbine/calculation/00 - Two-Phase Model Validation/RPM Variation')
-# excel_file = os.path.join(RESULTS_FOLDER, "results.xlsx")
-# rotor_df.to_excel(excel_file, sheet_name='220 rad_s')
 
 power = tt.power
 rpm = tt.rotor.rpm

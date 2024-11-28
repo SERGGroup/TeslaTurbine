@@ -58,6 +58,7 @@ class TPRotorStep(BaseRotorStep):
         self.liq_phase.set_variable("x", 0)
         self.vap_phase.set_variable("x", 1)
 
+        # self.thermo_point.set_variable("x", 0.00001)
         x = self.thermo_point.get_variable("x")
         m_g = self.m_dot * x
         m_l = self.m_dot * (1 - x)
@@ -203,8 +204,10 @@ class TPRotor(BaseRotor):
 
             for n in range(n_it):
 
+                __tmp_point[2] = self.intermediate_point.duplicate()
+
                 __tmp_point[2].set_variable("x", x_2)
-                __tmp_point[2].set_variable("h", self.main_turbine.static_points[2].get_variable("h"))
+                __tmp_point[2].set_variable("h", self.intermediate_point.get_variable("h"))
 
                 P_g_2 = __tmp_point[2].get_variable("P")
 

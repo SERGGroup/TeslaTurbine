@@ -1,5 +1,5 @@
 # %%------------   IMPORT CLASSES                         -----------------------------------------------------------> #
-from main_code.sub_classes.single_phase import SPRotor, SPTeslaGeometry, SPTeslaOptions, SPStatorMil
+from main_code.sub_classes.multi_phase import TPRotor, TPTeslaGeometry, TPTeslaOptions, TPStatorMil
 from main_code.base_classes import BaseTeslaTurbine
 import numpy as np
 from tqdm import tqdm
@@ -8,19 +8,21 @@ from scipy.ndimage.filters import gaussian_filter
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 4
-dv_perc_list = np.linspace(-0.4, 0.2, n_setpoints)
-TW_ref = 0.00114  # [m]
-TW_list = np.linspace(0.8, 1.2, n_setpoints) * TW_ref
+n_setpoints = 6
+dv_perc_list = np.linspace(-0.25, 0.25, n_setpoints)
+# rpm_list = np.linspace(5000, 20000, n_setpoints)
+TW_ref = 0.001  # [m]
+TW_list = np.linspace(0.1, 4, n_setpoints) * TW_ref
 dv_perc, TW = np.meshgrid(dv_perc_list, TW_list)
+# rpm, TW = np.meshgrid(rpm_list, TW_list)
 
 # Input Constraints Data
-P_in = 10100000  # [Pa]
-P_out = 3900000         # [Pa]
-T_in_c = 94  # [°C]
+P_in = 10000000  # [Pa]
+P_out = 3000000         # [Pa]
+T_in_c = 45  # [°C]
 T_in = T_in_c + 273.15  # [K]
 
-m_rif = 0.1             # [kg/s]
+m_rif = 2            # [kg/s]
 
 output_array_list = list()
 rotor_array_max_efficiency_list = list()
@@ -39,7 +41,6 @@ Eta_max_arr = np.empty(len(dv_perc_list))
 D_max_arr = np.empty(len(dv_perc_list))
 b_max_arr = np.empty(len(dv_perc_list))
 
-
 # %%------------   CALCULATION                             ----------------------------------------------------------> #
 
 for i in tqdm(range(n_setpoints)):
@@ -57,21 +58,21 @@ for i in tqdm(range(n_setpoints)):
     for j in tqdm(range(n_setpoints)):
 
         # INITIALIZING TURBINE CONDITIONS
-        curr_geometry = SPTeslaGeometry()
-        curr_options = SPTeslaOptions()
+        curr_geometry = TPTeslaGeometry()
+        curr_options = TPTeslaOptions()
         curr_options.rotor.integr_variable = 0.04  # [-]
-        curr_options.stator.metastability_check = False
-        curr_options.rotor.sp_check = True
+        curr_options.stator.metastability_check = True
+        curr_options.rotor.sp_check = False
         curr_options.rotor.n_rotor = 4000
 
         # Main design Parameters
-        curr_geometry.rotor.b_channel = 0.00005
+        curr_geometry.rotor.b_channel = 0.0001
         curr_geometry.rotor.d_ratio = 3  # [m]
         curr_geometry.d_main = 0.15  # [m]
 
-        tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=SPStatorMil, rotor=SPRotor)
+        tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=TPStatorMil, rotor=TPRotor)
 
-        tt.rotor.gap_losses_control = False
+        tt.rotor.gap_losses_control = True
         tt.rotor.dv_perc = dv_perc[i,j]
 
         Z_stat = 1
@@ -82,11 +83,11 @@ for i in tqdm(range(n_setpoints)):
 
         tt.geometry.disc_thickness = 0.0001
         tt.geometry.rotor.n_discs = 1
-        tt.geometry.H_s = 0.00015
+        tt.geometry.H_s = 0.0001
         tt.m_dot_tot = m_rif
         tt.geometry.n_channels = tt.n_packs
 
-        alpha_in = 89  # [°]
+        alpha_in = 85  # [°]
         tt.geometry.alpha1 = alpha_in
 
         tt.points[0].set_variable("P", P_in)
@@ -114,11 +115,11 @@ for i in tqdm(range(n_setpoints)):
             output_array[j + j_0, 4] = tt.work2
             output_array[j + j_0, 5] = tt.stator.m_dot_s
             output_array[j + j_0, 6] = tt.n_packs
-            output_array[j + j_0, 7] = tt.static_points[1].get_variable("p")
+            output_array[j + j_0, 7] = tt.points[1].get_variable("p")
             output_array[j + j_0, 8] = tt.stator.out_speed
             output_array[j + j_0, 9] = (tt.static_points[2].get_variable("h") - tt.static_points[3].get_variable("h")) / (tt.static_points[0].get_variable("h") - tt.static_points[3].get_variable("h"))
             output_array[j + j_0, 10] = tt.Eta_tesla_ss
-            output_array[j + j_0, 11] = tt.Eta_tesla_ts
+            output_array[j + j_0, 11] = tt.points[2].get_variable("p")
 
         else:
             output_array[j + j_0, 0] = np.nan
@@ -152,45 +153,29 @@ RPM_res = RPM_arr.reshape(dv_perc.shape)
 
 # %%------------   PLOT RESULTS                            ----------------------------------------------------------> #
 
-res1 = output_array[:, 1].reshape(dv_perc.shape)
-res2 = output_array[:, 0].reshape(dv_perc.shape)
+res1 = (output_array[:, 1] / 0.976).reshape(dv_perc.shape)
+res2 = output_array[:, 9].reshape(dv_perc.shape)
 res3 = ((output_array[:, 3] * output_array[:, 6]) / 1000).reshape(dv_perc.shape)
-res4 = (output_array[:, 6]).reshape(dv_perc.shape)
+res4 = ((output_array[:, 7] - output_array[:, 11]) / 100000).reshape(dv_perc.shape)
 
-sigma = 1.5
-res3 = gaussian_filter(res3, sigma)
-res4 = gaussian_filter(res4, sigma)
+# sigma = 1
+# res1 = gaussian_filter(res1, sigma)
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
-ETA = axs[0, 0].contourf(dv_perc, TW, res1, 10)
-NPACK = axs[0, 1].contourf(dv_perc, TW, res2, 8)
+ETA = axs[0, 0].contourf(dv_perc, TW, res1, 15)
+MFR = axs[0, 1].contourf(dv_perc, TW, res2, 8)
 SPEC_POWER = axs[1, 0].contourf(dv_perc, TW, res3, 10)
-PRESSURE = axs[1, 1].contourf(dv_perc, TW, res4, 10)
+PRESSURE = axs[1, 1].contourf(dv_perc, TW, res4, 8)
 
-axs[0, 0].set(xlabel='dv_perc [-]', ylabel='Throat Width [m]', title='Efficiency [-]')
-axs[0, 1].set(xlabel='dv_perc [-]', ylabel='Throat Width [m]', title='Rotational Speed [rpm]')
-axs[1, 0].set(xlabel='dv_perc [-]', ylabel='Throat Width [m]', title='Power [kW]')
-axs[1, 1].set(xlabel='dv_perc [-]', ylabel='Throat Width [m]', title='Number of Channels [-]')
+axs[0, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Efficiency / Reference Case Efficiency [-]')
+axs[0, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Degree of Reaction [-]')
+axs[1, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Power per Channel [W]')
+axs[1, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Stator-Rotor Gap Pressure Drop [bar]')
 
 CB1 = fig.colorbar(ETA, shrink=0.8, ax=axs[0, 0], aspect=30)
-CB2 = fig.colorbar(NPACK, shrink=0.8, ax=axs[0, 1], aspect=30)
+CB2 = fig.colorbar(MFR, shrink=0.8, ax=axs[0, 1], aspect=30)
 CB3 = fig.colorbar(SPEC_POWER, shrink=0.8, ax=axs[1, 0], aspect=30)
 CB4 = fig.colorbar(PRESSURE, shrink=0.8, ax=axs[1, 1], aspect=30)
-
-plt.suptitle("Performance at D = 0.15 m, b = 0.05 mm, D_ratio = 3", fontsize='16')
-
-plt.show()
-
-# %%------------             TRAJECTORY PLOT                        -------------------------------------------------> #
-fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
-
-ax.plot(rotor_array[:, 25] * np.pi / 180, rotor_array[:, 1])
-ax.set_rmax(0.075)
-ax.set_rticks([tt.geometry.d_main / tt.geometry.rotor.d_ratio /2,
-               (tt.geometry.d_main - tt.geometry.d_main / tt.geometry.rotor.d_ratio) / 2])
-ax.grid(True)
-
-ax.set_title("theta_rel")
 
 plt.show()

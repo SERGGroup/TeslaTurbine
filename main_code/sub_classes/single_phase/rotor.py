@@ -61,8 +61,21 @@ class SPRotor(BaseRotor):
             #         np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.geometry.H_s
             A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
 
-            rapporto = self.main_turbine.stator.geometry.Z_stat * A_out_sb / (2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s)
+            ''' Borda-Carnot Loss Coefficient --- Basic Hypothesis
+            - incompressible flow (or, at least, very low Mach number)
+            - subsonic flow
+            '''
+
             ke = (1 - A_in_sb / A_out_sb) ** 2
+
+            ''' Nouri-Burujerdi Loss Coefficient --- Basic Hypothesis
+            - compressible flow
+            - Mach number < 0.6
+            '''
+
+            # M = 0.6
+            # ke = 1.06 * (1 - A_in_sb / A_out_sb) ** 1.9 * np.exp((3 * M ** 2.87) / ((1 - A_in_sb / A_out_sb) ** 0.757))
+
             dh = self.main_turbine.points[0].get_variable("h") - self.isentropic_inlet.get_variable("h")
             rho1 = self.main_turbine.static_points[1].get_variable("rho")
             v_1ss = np.sqrt(2 * dh)
@@ -79,7 +92,9 @@ class SPRotor(BaseRotor):
             rho_1_R_star = self.intermediate_gap_point.get_variable("rho")
 
             # Evaluating Speed after Stator Loss
-            vr_1_R_star = (self.main_turbine.stator.m_dot_s / self.geometry.n_channels) / (
+            # vr_1_R_star = (self.main_turbine.stator.m_dot_s / self.geometry.n_channels) / (
+            #     2 * np.pi * self.geometry.b_channel * ((self.geometry.d_out + 2 * self.geometry.gap) / 2) * rho_1_R_star)
+            vr_1_R_star = (self.main_turbine.stator.m_dot_s / self.main_turbine.n_packs) / (
                 2 * np.pi * self.geometry.b_channel * ((self.geometry.d_out + 2 * self.geometry.gap) / 2) * rho_1_R_star)
             wr_1_R_star = vr_1_R_star
 
@@ -102,7 +117,9 @@ class SPRotor(BaseRotor):
             self.main_turbine.static_points[2].set_variable("h", h_1_R)
 
             # Evaluating Speed after Rotor Loss
-            vr_1_R = (self.main_turbine.stator.m_dot_s / self.geometry.n_channels) / (2 * np.pi * self.geometry.b_channel * (
+            # vr_1_R = (self.main_turbine.stator.m_dot_s / self.geometry.n_channels) / (2 * np.pi * self.geometry.b_channel * (
+            #     self.geometry.d_out / 2) * rho_1_R_star)
+            vr_1_R = (self.main_turbine.stator.m_dot_s / self.main_turbine.n_packs) / (2 * np.pi * self.geometry.b_channel * (
                 self.geometry.d_out / 2) * rho_1_R_star)
             v_1_R = np.sqrt(2 * (h_01_R - h_1_R))
             self.rotor_inlet_speed.init_from_codes("v", v_1_R, "v_r", vr_1_R)

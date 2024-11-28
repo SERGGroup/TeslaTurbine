@@ -17,7 +17,7 @@ curr_options = TPTeslaOptions()
 curr_options.rotor.profile_rotor = True
 curr_options.rotor.sp_check = False
 curr_options.rotor.tp_epsilon_model = "sarti"
-# curr_options.stator.metastability_check = True
+curr_options.stator.metastability_check = True
 
 P_in = 997233  # [Pa]
 x_in = 0  # [-]
@@ -51,7 +51,7 @@ for i in tqdm(range(n_setpoints)):
 
         # Geometric Parameters
         curr_geometry = TPTeslaGeometry()
-        curr_geometry.d_main = 0.4
+        curr_geometry.d_main = 0.2
         curr_geometry.rotor.b_channel = 0.0005  # [m]
         curr_geometry.disc_thickness = 0.0008  # [m]
         curr_geometry.alpha1 = 85  # [°]
@@ -62,11 +62,11 @@ for i in tqdm(range(n_setpoints)):
         curr_geometry.throat_width = TW[i, j]
         curr_geometry.rotor.n_discs = 1             # [-]
         curr_geometry.rotor.d_ratio = 3.5           # [-]
-        curr_geometry.rotor.n_packs = 1             # [-]
+        # curr_geometry.rotor.n_packs = 1             # [-]
         curr_geometry.rotor.roughness = 0.0000005   # [m]
 
-        single_hs = ( curr_geometry.rotor.n_discs - 1) * curr_geometry.disc_thickness + curr_geometry.rotor.n_discs * curr_geometry.rotor.b_channel
-        curr_geometry.H_s = single_hs * curr_geometry.rotor.n_packs
+        # single_hs = ( curr_geometry.rotor.n_discs - 1) * curr_geometry.disc_thickness + curr_geometry.rotor.n_discs * curr_geometry.rotor.b_channel
+        # curr_geometry.H_s = single_hs * curr_geometry.rotor.n_packs
 
         # Solving Parameters
         curr_options = TPTeslaOptions()
@@ -90,31 +90,54 @@ for i in tqdm(range(n_setpoints)):
         new_turbine.rotor.dv_perc = dv_perc[i,j]
         # new_turbine.rotor.rpm = 1400
         new_turbine.m_dot_tot = m_refr
+        # new_turbine.geometry.n_channels = new_turbine.n_packs
 
         new_turbine.P_in = P_in
         new_turbine.P_out = P_out
         new_turbine.iterate_pressure()
         new_turbine.evaluate_performances()
 
-        new_turbine.geometry.rotor.n_channels = np.rint(m_refr / new_turbine.stator.m_dot_s)
+        # new_turbine.geometry.rotor.n_channels = np.rint(m_refr / new_turbine.stator.m_dot_s)
 
-        Eta[j + j_0] = new_turbine.Eta_tesla_ss
-        Power[j + j_0] = new_turbine.power * new_turbine.geometry.rotor.n_channels
+        if new_turbine.Eta_tesla_ss < 1 and new_turbine.Eta_tesla_ss > 0:
 
-        output_array[j + j_0, 0] = new_turbine.volume
-        output_array[j + j_0, 1] = new_turbine.Eta_tesla_ss
-        output_array[j + j_0, 2] = new_turbine.work
-        output_array[j + j_0, 3] = new_turbine.power
-        output_array[j + j_0, 4] = new_turbine.rotor.dv_perc
-        output_array[j + j_0, 5] = new_turbine.stator.m_dot_s
-        output_array[j + j_0, 6] = new_turbine.n_packs
-        output_array[j + j_0, 7] = new_turbine.static_points[1].get_variable("p")
-        output_array[j + j_0, 8] = new_turbine.stator.out_speed
-        output_array[j + j_0, 9] = new_turbine.rotor.out_speed.wt
+            Eta[j + j_0] = new_turbine.Eta_tesla_ss
+            Power[j + j_0] = new_turbine.power * new_turbine.n_packs
 
-        Eta_arr[i * n_setpoints + j] = new_turbine.Eta_tesla_ss
-        Power_arr[i * n_setpoints + j] = new_turbine.power * new_turbine.geometry.rotor.n_channels
-        RPM_arr[i * n_setpoints + j] = new_turbine.rotor.rpm
+            output_array[j + j_0, 0] = new_turbine.volume
+            output_array[j + j_0, 1] = new_turbine.Eta_tesla_tt2
+            output_array[j + j_0, 2] = new_turbine.work
+            output_array[j + j_0, 3] = new_turbine.power
+            output_array[j + j_0, 4] = new_turbine.rotor.dv_perc
+            output_array[j + j_0, 5] = new_turbine.stator.m_dot_s
+            output_array[j + j_0, 6] = new_turbine.n_packs
+            output_array[j + j_0, 7] = new_turbine.static_points[1].get_variable("p")
+            output_array[j + j_0, 8] = new_turbine.stator.out_speed
+            output_array[j + j_0, 9] = new_turbine.rotor.out_speed.wt
+
+        else:
+            output_array[j + j_0, 0] = np.nan
+            output_array[j + j_0, 1] = np.nan
+            output_array[j + j_0, 2] = np.nan
+            output_array[j + j_0, 3] = np.nan
+            output_array[j + j_0, 4] = np.nan
+            output_array[j + j_0, 5] = np.nan
+            output_array[j + j_0, 6] = np.nan
+            output_array[j + j_0, 7] = np.nan
+            output_array[j + j_0, 8] = np.nan
+            output_array[j + j_0, 9] = np.nan
+
+        if new_turbine.Eta_tesla_ss < 1 and new_turbine.Eta_tesla_ss > 0:
+
+            Eta_arr[i * n_setpoints + j] = new_turbine.Eta_tesla_ss
+            Power_arr[i * n_setpoints + j] = new_turbine.power * new_turbine.n_packs
+            RPM_arr[i * n_setpoints + j] = new_turbine.rotor.rpm
+
+        else:
+
+            Eta_arr[i * n_setpoints + j] = np.nan
+            Power_arr[i * n_setpoints + j] = np.nan
+            RPM_arr[i * n_setpoints + j] = np.nan
 
 Eta_res = Eta_arr.reshape(dv_perc.shape)
 Power_res = Power_arr.reshape(dv_perc.shape)
