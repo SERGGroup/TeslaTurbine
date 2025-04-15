@@ -27,8 +27,8 @@ curr_options2.rotor.sp_check = False
 curr_options2.rotor.tp_epsilon_model = "sarti"
 curr_options2.stator.metastability_check = True
 
-fluid = "R1234ze(Z)"
-tesla_turbine1 = BaseTeslaTurbine("R1234ze(Z)", curr_geometry, curr_options1, stator=TPStatorMil, rotor=TPRotor)
+fluid = "R404"
+tesla_turbine1 = BaseTeslaTurbine(fluid, curr_geometry, curr_options1, stator=TPStatorMil, rotor=TPRotor)
 tesla_turbine2 = BaseTeslaTurbine("R1234ze(Z)", curr_geometry, curr_options2, stator=TPStatorMil, rotor=TPRotor)
 
 P_in = 997233         # [Pa]
