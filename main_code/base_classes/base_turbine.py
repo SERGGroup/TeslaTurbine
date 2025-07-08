@@ -107,18 +107,21 @@ class BaseTeslaTurbine:
         for i in range (n_it):
 
             P_1s = (P_up + P_down) / 2
+            flags = self.solve_with_stator_outlet_pressure(P_1s, self.P_out / 2)
 
-            self.solve_with_stator_outlet_pressure(P_1s)
-
-            P_out_tent = self.static_points[3].get_variable("P")
-            error = abs((P_out_tent - self.P_out) / P_out_tent)
-
-            if error < 0.0001:
-                break
-            elif self.P_out < P_out_tent:
-                P_up = P_1s
-            else:
+            if flags["inlet_pressure_low"]:
                 P_down = P_1s
+
+            else:
+                P_out_tent = self.static_points[3].get_variable("P")
+                error = abs((P_out_tent - self.P_out) / P_out_tent)
+
+                if error < 0.0001:
+                    break
+                elif self.P_out < P_out_tent:
+                    P_up = P_1s
+                else:
+                    P_down = P_1s
 
             k += 1
 
@@ -139,23 +142,28 @@ class BaseTeslaTurbine:
 
             P_1s = (P_up + P_down) / 2
 
-            self.solve_with_stator_outlet_pressure(P_1s)
+            flags = self.solve_with_stator_outlet_pressure(P_1s)
 
-            P_out_tent = self.points[3].get_variable("P")
-            error = abs((P_out_tent - self.P_out) / P_out_tent)
-
-            if error < 0.0001:
-                break
-            elif self.P_out < P_out_tent:
-                P_up = P_1s
-            else:
+            if flags["inlet_pressure_low"]:
                 P_down = P_1s
 
-    def solve_with_stator_outlet_pressure(self, P_1s):
+            else:
+                P_out_tent = self.points[3].get_variable("P")
+                error = abs((P_out_tent - self.P_out) / P_out_tent)
+
+                if error < 0.0001:
+                    break
+                elif self.P_out < P_out_tent:
+                    P_up = P_1s
+                else:
+                    P_down = P_1s
+
+    def solve_with_stator_outlet_pressure(self, P_1s, p_static_min=0.):
 
         self.static_points[1].set_variable("P", P_1s)
         self.stator.solve()
-        self.rotor.solve()
+        flags = self.rotor.solve(min_static_pressure=p_static_min)
+        return flags
 
     def fix_rotor_inlet_condition(self, P_1s, T_1s, alpha, v):
 
@@ -218,11 +226,11 @@ class BaseTeslaTurbine:
                 self.static_points[0].get_variable("h") - self.isentropic_static_outlet.get_variable("h"))
 
         self.work = self.rotor.first_speed.vt * self.rotor.first_speed.u - self.rotor.rotor_points[-1].speed.vt * self.rotor.rotor_points[-1].speed.u
-        self.work2 = self.points[2].get_variable("h") - self.points[3].get_variable("h")
-        self.power = self.work * self.rotor.m_dot_ch
+        self.work_enthalpy = self.points[2].get_variable("h") - self.points[3].get_variable("h")
+        self.power = self.work * self.m_dot_tot
+        self.power_ch = self.work * self.rotor.m_dot_ch
 
-        self.Eta_tesla_tt = self.work2 / (self.points[0].get_variable("h") - self.isentropic_total_outlet.get_variable("h"))
-        self.Eta_tesla_tt2 = self.work / (self.points[0].get_variable("h") - self.isentropic_total_outlet.get_variable("h"))
+        self.Eta_tesla_tt_check = self.work / (self.points[0].get_variable("h") - self.isentropic_total_outlet.get_variable("h"))
 
     def evaluate_bearing_performances(self, M_lost):
 

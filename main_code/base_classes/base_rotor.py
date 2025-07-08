@@ -36,7 +36,6 @@ class BaseRotorStep(ABC):
 
     @property
     def m_dot(self):
-
         return self.main_rotor.m_dot_ch
 
     @property
@@ -109,6 +108,11 @@ class BaseRotor(ABC):
 
     __dv_perc = 0.1315
     __omega = None
+    __base_flags = {
+
+        "inlet_pressure_low": False,
+
+    }
 
     def __init__(self, main_turbine, rotor_step: type(BaseRotorStep)):
 
@@ -132,7 +136,9 @@ class BaseRotor(ABC):
         self.rotor_inlet_speed = Speed(inlet_pos)
         self.first_speed = Speed(inlet_pos)
 
-    def solve(self):
+    def solve(self, min_static_pressure=0.):
+
+        flags = self.__base_flags.copy()
 
         self.rotor_points = list()
         self.evaluate_gap_losses()
@@ -174,11 +180,18 @@ class BaseRotor(ABC):
             dr = a ** i * (a - 1) * b
             new_step = new_step.get_new_step(dr)
 
+            if new_step.thermo_point.get_variable("P") < min_static_pressure:
+
+                flags["inlet_pressure_low"] = True
+                break
+
         if self.options.profile_rotor:
             self.rotor_points.append(new_step)
 
         self.rotor_points[-1].thermo_point.copy_state_to(self.main_turbine.static_points[3])
         self.rotor_points[-1].total_thermo_point.copy_state_to(self.main_turbine.points[3])
+
+        return flags
 
     @abstractmethod
     def evaluate_gap_losses(self):
@@ -205,7 +218,7 @@ class BaseRotor(ABC):
     def m_dot_ch(self):
 
         # return self.main_turbine.stator.m_dot_s / self.main_turbine.geometry.n_channels
-        return self.main_turbine.stator.m_dot_s
+        return self.main_turbine.stator.m_dot_s  / self.geometry.n_discs
 
     def get_rotor_array(self):
 

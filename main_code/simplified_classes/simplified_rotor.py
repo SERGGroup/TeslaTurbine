@@ -1,49 +1,125 @@
+from main_code.base_classes.base_rotor import BaseRotorStep, BaseRotor
+from main_code.base_classes.support import Speed
+from abc import ABC, abstractmethod
 import numpy as np
-from main_code.base_classes.base_rotor import BaseRotor, BaseRotorStep, Speed, Position
 
+class SimplifiedBaseRotorStep(BaseRotorStep, ABC):
 
-class SPRotorStep(BaseRotorStep):
+    def get_new_step(self, dr):
 
-    def __init__(self, main_rotor, speed: Speed):
+        # Update Position
+        self.new_pos = self.speed.get_new_position(dr)
 
-        super().__init__(main_rotor, speed)
+        dvr, dvt, dp, dh = self.get_variations(-dr)
+
+        # Update Speed
+        new_speed = Speed(self.new_pos)
+        vt_new = self.speed.vt + dvt
+        vr_new = self.speed.vr + dvr
+        new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
+
+        # Init a new step
+        new_class = self.self_class()
+        new_step = new_class(main_rotor=self.main_rotor, speed=new_speed)
+
+        # Update Thermodynamic Point
+        p_new = self.thermo_point.get_variable("P") + dp
+        h_new = self.thermo_point.get_variable("H") + dh
+
+        new_step.thermo_point.set_variable("P", p_new)
+        new_step.thermo_point.set_variable("H", h_new)
+
+        return new_step
 
     def get_variations(self, dr):
+        """ Function to evaluate the variations of the thermodynamic variables
+        and speed given the discrimination of the Navier-Stokes equations.
+        Derivatives of thermodynamic variables are retrieved from the REFPROP.
+        The derivatives of rothalpy and the friction factor should be provided
+        by the user
+        """
 
-        rho = self.thermo_point.get_variable("rho")
-        r_new = self.new_pos.r
-        u = self.speed.u
+        r = self.pos.r
+        b_chnl = self.geometry.b_channel
+        vr = self.speed.vr
+        vt = self.speed.vt
         wt = self.speed.wt
-        omega = self.new_pos.omega
+        om = self.pos.omega
 
-        vr_new = self.m_dot /(2 * np.pi * self.geometry.b_channel * r_new * rho)
+        drho_dp = self.thermo_point.get_derivative("rho", "P", "H")
+        drho_dh = self.thermo_point.get_derivative("rho", "H", "P")
+        rho = self.thermo_point.get_variable("rho")
 
-        dvr = vr_new - self.speed.vr
+        d_hyd = 2 * (b_chnl * 2 * np.pi * r) / (b_chnl + 2 * np.pi * r)
+        f = abs((self.get_friction_coefficient() * self.speed.w ** 2) / (2 * d_hyd))
+        di = self.get_heat_losses() / (b_chnl * rho * vr)
 
-        coef = 6.5
-        mu = self.thermo_point.get_variable("visc")
-        ni = mu / rho
+        dvt = f * self.speed.sin_beta / vr - vt / r
 
-        wtFG = wt - dr * (-(10 / coef) * omega - (ni * 60 / (-vr_new * coef * self.geometry.b_channel ** 2) + 1 / r_new) * wt)
-        wt_c = (wt + wtFG) / 2
-        dwt = -dr *(-(10 / coef) * omega - (ni * 60/(-vr_new * coef * self.geometry.b_channel ** 2)+1 / r_new) * wt_c)
-        wt_new = self.speed.wt + dwt
+        A = di + om * vt - wt * dvt
+        B = f * self.speed.cos_beta + vt ** 2 / r
+        C = 1 - vr ** 2 * (drho_dp + drho_dh / rho)
+        D = r * (rho * drho_dp * B + drho_dh * A) / rho
 
-        dP = - dr * rho * ( omega ** 2 * r_new + 2 * wt_new * omega * coef / 6 + coef ** 2 / 30 * wt_new ** 2 / r_new - coef ** 2 / 30 *
-                    vr_new * dvr / dr + 2 * coef * ni * vr_new / self.geometry.b_channel ** 2)
+        dvr = - (1 + D) / C * vr / r
+        dp = rho * (B - vr * dvr)
+        dh = A - vr * dvr
 
-        return dvr, dwt, dP, 0.
+        return dvr * dr, dvt * dr, dp * dr, dh * dr
 
-    def solve(self):
+    @abstractmethod
+    def get_friction_coefficient(self):
+        """
 
-        pass
+            This function must return the friction coefficient for the current
+            rotor step. Darcy Factor should be returned.
+
+        """
+        return 0.
+
+    @abstractmethod
+    def get_heat_losses(self):
+        """
+
+            This function must return the heat losses for the current rotor step
+            in [W/m^2]. It is used to evaluate the rothalpy balance.
+            For adiabatic turbines, return 0.
+
+        """
+        return 0.
 
 
-class SPRotor(BaseRotor):
+class SimplifiedRotorStep(SimplifiedBaseRotorStep):
+    """
+        This class is a simplified version of the rotor step, which is used to
+        evaluate the performance of the rotor in a Tesla turbine. It is a
+        simplified version of the BaseRotorStep class, which is used to evaluate
+        the performance of the rotor in a Tesla turbine.
+    """
+
+    def get_friction_coefficient(self):
+
+        """Calculate the friction coefficient based on the Churchill Equation"""
+        r = self.pos.r
+        b_chnl = self.geometry.b_channel
+        d_hyd = 2 * (b_chnl * 2 * np.pi * r) / (b_chnl + 2 * np.pi * r)
+        rho = self.thermo_point.get_variable("rho")
+        mu = self.thermo_point.get_variable("mu")
+        re = rho * np.abs(self.speed.w) * d_hyd / mu
+
+        A = (2.457 * np.log(1 / ((7 / re) ** 0.9 + 0.27 * self.geometry.roughness / d_hyd))) ** 16
+        B = (37530 / re) ** 16
+        return 2 * ((8 / re) ** 12 + 1 / ((A + B) ** 1.5)) ** (1 / 12)
+
+    def get_heat_losses(self):
+        return 0.
+
+
+class SimplifiedRotor(BaseRotor):
 
     def __init__(self, main_turbine):
 
-        super().__init__(main_turbine, SPRotorStep)
+        super().__init__(main_turbine, SimplifiedRotorStep)
 
         self.isentropic_inlet = self.main_turbine.stator.isentropic_output
         self.intermediate_gap_point = self.main_turbine.points[0].duplicate()

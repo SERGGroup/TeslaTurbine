@@ -6,8 +6,8 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 
-# %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
+# %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 # The design parameters analyzed here are throat width and dv_perc. This section of code define their range of variation
 n_setpoints = 8
 dv_perc_list = np.linspace(-0.4, 0.2, n_setpoints)

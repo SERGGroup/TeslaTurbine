@@ -174,7 +174,7 @@ class TPRotor(BaseRotor):
 
             A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
             A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(
-                np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
+                np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_r
             A_ratio1 = A_in_sb / A_out_sb
 
             ke = (1 - A_in_sb / A_out_sb) ** 2
@@ -293,7 +293,7 @@ class TPRotor(BaseRotor):
             #     np.radians(self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
             #     np.radians(self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
             A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(
-                np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
+                np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_r
             A_ratio1 = A_in_sb / A_out_sb
 
             # Evaluation of Enlargement Pressure Losses
