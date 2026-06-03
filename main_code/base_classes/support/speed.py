@@ -98,7 +98,11 @@ class Speed:
     def get_new_position(self, dr):
 
         new_r = self.pos.r - dr
-        dt = dr / self.__vr
+
+        if not (self.__vr == 0.):
+            dt = dr / self.__vr
+        else:
+            dt = 0.
 
         new_t = self.pos.t + dt
         new_theta = self.pos.theta + self.__vt / self.pos.r * dt
@@ -150,6 +154,22 @@ class Speed:
     def beta(self):
 
         return self.__beta
+
+    @property
+    def sin_beta(self):
+
+        if not self.__w == 0:
+            return self.__wt / self.__w
+        else:
+            return None
+
+    @property
+    def cos_beta(self):
+
+        if not self.__w == 0:
+            return self.__wr / self.__w
+        else:
+            return None
 
     @property
     def has_been_set(self):

@@ -6,8 +6,6 @@ class RotorGeometry:
     d_ratio = 3
     b_channel = 0.0001
     roughness = 0.000001
-    # n_channels = 50
-    # n_packs = 50
     n_discs = 2
     gap = 0.0004
     alpha_1PS = 78.503
@@ -186,6 +184,16 @@ class StatorGeometry:
 
         return self.main_class.alpha1 * np.pi / 180
 
+    @property
+    def throat_width(self):
+        """Calculate the throat width based on the rotor geometry."""
+        return self.main_class.throat_width
+
+    @throat_width.setter
+    def throat_width(self, value):
+        """Set the throat width."""
+        self.main_class.throat_width = value
+
 
 class BaseTeslaGeometry:
 
@@ -193,6 +201,7 @@ class BaseTeslaGeometry:
     throat_width = 0.0004934
     alpha1 = 85
     disc_thickness = 0.0008
+    __hs = None
 
     def __init__(
 
@@ -205,4 +214,20 @@ class BaseTeslaGeometry:
         self.stator = stator_geometry(self)
         self.rotor = rotor_geometry(self)
 
-        self.H_s = (self.rotor.n_discs - 1) * self.disc_thickness + self.rotor.n_discs * self.rotor.b_channel
+    @property
+    def H_s(self):
+        """Height of the stator channel, which is, by default, the same as the rotor channel height."""
+        if self.__hs is None:
+            return self.H_r
+        else:
+            return self.__hs
+
+    @H_s.setter
+    def H_s(self, value):
+        """Set the height of the stator channel."""
+        self.__hs = value
+
+    @property
+    def H_r(self):
+        """Height of the rotor channel. Evaluated from the rotor geometry."""
+        return (self.rotor.n_discs - 1) * self.disc_thickness + self.rotor.n_discs * self.rotor.b_channel
