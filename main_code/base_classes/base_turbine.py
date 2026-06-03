@@ -56,9 +56,6 @@ class BaseTeslaTurbine:
         self.work = 0.
         self.power = 0.
 
-        self.include_extra_losses = False
-
-
     def __init_states(self, n_points):
 
         base_point = TP(self.fluid, self.comp, unit_system="MASS BASE SI")
@@ -111,7 +108,6 @@ class BaseTeslaTurbine:
 
             P_1s = (P_up + P_down) / 2
 
-            print(f"Iteration {i+1} - P_guess = {P_1s:.2f} Pa")
             self.solve_with_stator_outlet_pressure(P_1s)
 
             P_out_tent = self.static_points[3].get_variable("P")
@@ -247,9 +243,9 @@ class BaseTeslaTurbine:
         self.work = self.rotor.first_speed.vt * self.rotor.first_speed.u - self.rotor.rotor_points[-1].speed.vt * self.rotor.rotor_points[-1].speed.u
         self.power = self.work * self.rotor.m_dot_ch
 
-        # self.Eta_tesla_ss = self.work / (self.static_points[0].get_variable("h") - self.isentropic_outlet.get_variable("h"))
+        self.Eta_tesla_ss = self.work / (self.static_points[0].get_variable("h") - self.isentropic_outlet.get_variable("h"))
 
-        self.Eta_bearings = (self.work - M_lost * self.rotor.omega / (self.rotor.m_dot_ch * self.geometry.rotor.n_discs * self.n_packs)) / (self.static_points[0].get_variable("h") - self.isentropic_static_outlet.get_variable("h"))
+        self.Eta_bearings = (self.work - M_lost * self.rotor.omega / (self.rotor.m_dot_ch * self.geometry.rotor.n_discs * self.n_packs)) / (self.static_points[0].get_variable("h") - self.isentropic_outlet.get_variable("h"))
 
     def evaluate_rotor_performances(self):
 

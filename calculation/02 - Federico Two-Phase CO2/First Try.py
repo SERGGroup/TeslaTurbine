@@ -5,22 +5,21 @@ import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
-from scipy.interpolate import griddata
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 4
-dv_perc_list = np.linspace(-0.5, 0.3, n_setpoints)
+n_setpoints = 6
+dv_perc_list = np.linspace(-0.25, 0.25, n_setpoints)
 # rpm_list = np.linspace(5000, 20000, n_setpoints)
-TW_ref = 0.0015  # [m]
-TW_list = np.linspace(1, 1.5, n_setpoints) * TW_ref
+TW_ref = 0.001  # [m]
+TW_list = np.linspace(0.1, 4, n_setpoints) * TW_ref
 dv_perc, TW = np.meshgrid(dv_perc_list, TW_list)
 # rpm, TW = np.meshgrid(rpm_list, TW_list)
 
 # Input Constraints Data
-P_in = 11900000  # [Pa]
-P_out = 4500000         # [Pa]
-T_in_c = 53.29  # [°C]
+P_in = 10000000  # [Pa]
+P_out = 3000000         # [Pa]
+T_in_c = 45  # [°C]
 T_in = T_in_c + 273.15  # [K]
 
 m_rif = 2            # [kg/s]
@@ -69,14 +68,14 @@ for i in tqdm(range(n_setpoints)):
         # Main design Parameters
         curr_geometry.rotor.b_channel = 0.0001
         curr_geometry.rotor.d_ratio = 3  # [m]
-        curr_geometry.d_main = 0.10  # [m]
+        curr_geometry.d_main = 0.15  # [m]
 
         tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=TPStatorMil, rotor=TPRotor)
 
         tt.rotor.gap_losses_control = True
         tt.rotor.dv_perc = dv_perc[i,j]
 
-        Z_stat = 3
+        Z_stat = 1
         tt.geometry.stator.Z_stat = Z_stat
 
         throat_width = TW[i,j]
@@ -84,7 +83,7 @@ for i in tqdm(range(n_setpoints)):
 
         tt.geometry.disc_thickness = 0.0001
         tt.geometry.rotor.n_discs = 1
-        tt.geometry.H_s = tt.geometry.rotor.n_discs * (tt.geometry.disc_thickness + tt.geometry.rotor.b_channel)
+        tt.geometry.H_s = 0.0001
         tt.m_dot_tot = m_rif
         tt.geometry.n_channels = tt.n_packs
 
@@ -110,7 +109,7 @@ for i in tqdm(range(n_setpoints)):
             Power[j + j_0] = tt.power * tt.n_packs
 
             output_array[j + j_0, 0] = tt.rotor.rpm
-            output_array[j + j_0, 1] = tt.Eta_tesla_ts
+            output_array[j + j_0, 1] = tt.Eta_tesla_tt2
             output_array[j + j_0, 2] = tt.work
             output_array[j + j_0, 3] = tt.power
             output_array[j + j_0, 4] = tt.work2
@@ -154,13 +153,13 @@ RPM_res = RPM_arr.reshape(dv_perc.shape)
 
 # %%------------   PLOT RESULTS                            ----------------------------------------------------------> #
 
-res1 = (output_array[:, 1]).reshape(dv_perc.shape)
+res1 = (output_array[:, 1] / 0.976).reshape(dv_perc.shape)
 res2 = output_array[:, 9].reshape(dv_perc.shape)
 res3 = ((output_array[:, 3] * output_array[:, 6]) / 1000).reshape(dv_perc.shape)
 res4 = ((output_array[:, 7] - output_array[:, 11]) / 100000).reshape(dv_perc.shape)
 
-sigma = 1
-res1 = gaussian_filter(res1, sigma)
+# sigma = 1
+# res1 = gaussian_filter(res1, sigma)
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 

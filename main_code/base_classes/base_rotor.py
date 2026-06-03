@@ -8,11 +8,23 @@ class BaseRotorStep(ABC):
     def __init__(self, main_rotor, speed: Speed):
 
         self.main_rotor = main_rotor
-        self.main_turbine = self.main_rotor.main_turbine
         self.options = main_rotor.options
 
         self.speed = speed
+        # self.thermo_point = self.main_rotor.input_point
         self.thermo_point = self.main_rotor.input_point.duplicate()
+
+        if self.main_rotor.options.sp_check == True:
+            self.thermo_point.set_variable('rho', self.main_rotor.input_point.get_variable('rho'))
+            self.thermo_point.set_variable('P', self.main_rotor.input_point.get_variable('P'))
+
+        else:
+
+            self.thermo_point.set_variable('P', self.main_rotor.input_point.get_variable('P'))
+            if self.main_rotor.input_point.get_variable("x") == 0:
+                self.thermo_point.set_variable("x", 0.000000001)
+            else:
+                self.thermo_point.set_variable("x", self.main_rotor.input_point.get_variable("x"))
 
         self.geometry = self.main_rotor.geometry
         self.__omega = 0.
@@ -39,100 +51,43 @@ class BaseRotorStep(ABC):
 
         return total_thermo_point
 
-    def get_heat_exchange(self, speed: Speed, dr, new_step):
-
-        # Ipotizza una temperatura costante del disco pari a quella del tank
-        disc_temp = self.main_rotor.options.tank_temp
-
-        # Recupera le proprietà termodinamiche del fluido al nuovo punto
-        rho = new_step.thermo_point.get_variable("rho")
-        mu = new_step.thermo_point.get_variable("visc")
-        k = new_step.thermo_point.get_variable("k")
-        T = new_step.thermo_point.get_variable("T")
-        cp = new_step.thermo_point.get_variable("cp")
-
-        # Calcola il fattore di recupero (radice cubica del Prandtl -- circa 0.9 per CO2)
-        r_recovery = 0.9
-
-        # Calcola la temperatura adiabatica di parete
-        T_aw = T + r_recovery * (speed.w ** 2) / (2 * cp)
-
-        # Correlazione per il coefficiente di convezione da Esempio Prof
-        b = self.main_rotor.geometry.b_channel
-        D_h = 2 * b
-
-        Re_rad = rho * speed.vr * D_h / mu
-        Re_rot = rho * self.main_rotor.omega * speed.pos.r ** 2 / mu
-        Ekman = mu / (rho * self.main_rotor.omega * b ** 2)
-
-        nu_ref = 7.54
-        nu = nu_ref * (1 + 0.012 * (Re_rot / Re_rad) ** 0.55 * (1 / Ekman) ** 0.33)
-
-        h_conv = (nu * k) / D_h
-
-        area = 2 * np.pi * ((speed.pos.r + dr) ** 2 - speed.pos.r ** 2)
-        flow_rate_channel = self.main_turbine.stator.m_dot_s
-        dpower = h_conv * area * (T_aw - disc_temp)
-        dq = dpower / flow_rate_channel
-
-        dt_exp = dpower / (flow_rate_channel * new_step.thermo_point.get_variable("cp"))
-
-        return dq, dpower, T, dt_exp
-
     def get_new_step(self, dr):
 
         # Update Position
         self.new_pos = self.speed.get_new_position(dr)
-        dvr, dvwt, dp, dh = self.get_variations(dr)
-
-        current_rothalpy = self.main_rotor.rothalpy
 
         # Evaluate main parameter variation
         if self.options.sp_check is True:
 
+            dvr, dwt, dp, dh = self.get_variations(dr)
+
             # Update Speed
             new_speed = Speed(self.new_pos)
-            wt_new = self.speed.wt + dvwt
+            wt_new = self.speed.wt + dwt
             vr_new = self.speed.vr + dvr
             new_speed.init_from_codes("wt", wt_new, "vr", vr_new)
 
         else:
 
+            dvr, dvt, dp, dh = self.get_variations(dr)
+
             # Update Speed
             new_speed = Speed(self.new_pos)
-            vt_new = self.speed.vt + dvwt
+            vt_new = self.speed.vt + dvt
             vr_new = self.speed.vr + dvr
             new_speed.init_from_codes("vt", vt_new, "vr", vr_new)
-
-        if self.options.heat_exchange is False:
-
-            # Update Enthalpy through Rothalpy Conservation
-            h_new = current_rothalpy + new_speed.u * new_speed.vt - 1/2 * new_speed.v ** 2
-
-        else:
-
-            # Update Enthalpy through variation
-            dq, dpower, T_in, dt_th = self.get_heat_exchange(new_speed, dr, self)
-            current_rothalpy -= dq
-            h_new = current_rothalpy + new_speed.u * new_speed.vt - 1/2 * new_speed.v ** 2
 
         # Init a new step
         new_class = self.self_class()
         new_step = new_class(main_rotor=self.main_rotor, speed=new_speed)
 
+        # Update Enthalpy through Rothalpy Conservation
+        h_new = self.main_rotor.rothalpy + new_speed.u * new_speed.vt - 1/2 * new_speed.v ** 2
+
         # Update Thermodynamic Point
         p_new = self.thermo_point.get_variable("P") + dp
         new_step.thermo_point.set_variable("P", p_new)
         new_step.thermo_point.set_variable("H", h_new)
-
-        if self.options.heat_exchange:
-            self.main_rotor.thermal_power += dpower
-            thermal_power = self.main_rotor.thermal_power
-        else:
-
-            self.main_rotor.thermal_power = 0.
-
-        self.main_rotor.rothalpy = current_rothalpy
 
         return new_step
 
@@ -161,12 +116,14 @@ class BaseRotor(ABC):
         self.geometry = self.main_turbine.geometry.rotor
         self.options = self.main_turbine.options.rotor
 
+        # self.input_point = self.main_turbine.points[2]
+        # self.output_point = self.main_turbine.points[3]
+
         self.input_point = self.main_turbine.static_points[2].duplicate()
         self.output_point = self.main_turbine.static_points[3].duplicate()
 
         self.gap_losses_control = True
         self.rothalpy = 0.
-        self.tank_temp = self.options.tank_temp
 
         self.rotor_points = list()
         self.rotor_step_cls = rotor_step
@@ -174,10 +131,6 @@ class BaseRotor(ABC):
         inlet_pos = Position(self.geometry.r_out, 0)
         self.rotor_inlet_speed = Speed(inlet_pos)
         self.first_speed = Speed(inlet_pos)
-
-        self.thermal_power = 0.
-        self.dI = 0.
-        self.dQ = 0.
 
     def solve(self):
 
@@ -192,7 +145,11 @@ class BaseRotor(ABC):
         first_pos = Position(self.geometry.r_out, self.omega)
         self.first_speed = Speed(position=first_pos)
 
+        # TODO: Change to static pressure model
         self.first_speed.equal_absolute_speed_to(self.rotor_inlet_speed)
+
+        # self.rothalpy = (self.main_turbine.static_points[2].get_variable("h") + (self.first_speed.w ** 2) / 2 -
+        #                  (self.first_speed.u ** 2) / 2)
 
         self.rothalpy = self.main_turbine.points[2].get_variable("h") - self.first_speed.vt * self.first_speed.u
 

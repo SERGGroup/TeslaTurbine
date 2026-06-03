@@ -8,17 +8,17 @@ from tqdm import tqdm
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
 curr_geometry = TPTeslaGeometry()
-curr_geometry.d_main = 0.15                  # [m]
-curr_geometry.throat_width = 0.00114         # [m]
-curr_geometry.disc_thickness = 0.0001       # [m]
+curr_geometry.d_main = 0.3                  # [m]
+curr_geometry.throat_width = 0.003          # [m]
+curr_geometry.disc_thickness = 0.0008       # [m]
 curr_geometry.alpha1 = 85                   # [°]
-curr_geometry.stator.Z_stat = 1             # [-]
+curr_geometry.stator.Z_stat = 4             # [-]
 
 curr_geometry.rotor.gap = 0.001             # [m]
 
 curr_geometry.rotor.b_channel = 0.0001      # [m]
 curr_geometry.rotor.n_discs = 1             # [-]
-curr_geometry.rotor.d_ratio = 3           # [-]
+curr_geometry.rotor.d_ratio = 3.5           # [-]
 curr_geometry.rotor.n_packs = 1             # [-]
 curr_geometry.rotor.roughness = 0.0000005   # [m]
 
@@ -60,3 +60,7 @@ for i in tqdm(range(len(P_out))):
     output_array[i, 0] = tt.stator.m_dot_s
     output_array[i, 1] = tt.stator.out_speed
     output_array[i, 2] = tt.stator.x_out
+
+# %%------------           PLOT RESULTS                    ----------------------------------------------------------> #
+
+fig

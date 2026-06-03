@@ -53,7 +53,6 @@ tt.points[0].set_variable("P", P_in)
 tt.points[0].set_variable("T", T_in)
 tt.stator.stator_eff = 0.9
 tt.rotor.gap_losses_control = True
-tt.include_extra_losses = False
 
 tt.P_in = P_in
 tt.P_out = P_out
@@ -63,32 +62,6 @@ tt.iterate_pressure()
 tt.evaluate_performances()
 rotor_array = tt.rotor.get_rotor_array()
 
-print("=" * 70)
-print(f" Inlet: Pressure = {tt.static_points[0].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.static_points[0].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.static_points[0].get_variable('h'):.2f} W")
-print(f" Nozzle: Pressure = {tt.static_points[1].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.static_points[1].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.static_points[1].get_variable('h'):.2f} W")
-print(f" Rotor Inlet: Pressure = {tt.static_points[2].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.static_points[2].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.static_points[2].get_variable('h'):.2f} W")
-print(f" Outlet: Pressure = {tt.static_points[3].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.static_points[3].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.static_points[3].get_variable('h'):.2f} W")
-print(f" Total Inlet: Pressure = {tt.points[0].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.points[0].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.points[0].get_variable('h'):.2f} W")
-print(f" Total Nozzle: Pressure = {tt.points[1].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.points[1].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.points[1].get_variable('h'):.2f} W")
-print(f" Total Rotor Inlet: Pressure = {tt.points[2].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.points[2].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.points[2].get_variable('h'):.2f} W")
-print(f" Total Outlet: Pressure = {tt.points[3].get_variable('P') / 100000:.2f} bar,"
-      f" Temperature = {tt.points[3].get_variable('T') - 273.15:.2f} °C,"
-      f" Enthalpy = {tt.points[3].get_variable('h'):.2f} W")
-print("=" * 70)
 
 # %%------------             TRAJECTORY PLOT                        -------------------------------------------------> #
 fig, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={"projection": "polar"})
