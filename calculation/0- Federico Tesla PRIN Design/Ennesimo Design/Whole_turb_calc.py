@@ -155,11 +155,10 @@ RPM_res = RPM_arr.reshape(dv_perc.shape)
 res1 = output_array[:, 1].reshape(dv_perc.shape)
 res2 = output_array[:, 0].reshape(dv_perc.shape)
 res3 = ((output_array[:, 3] * output_array[:, 6]) / 1000).reshape(dv_perc.shape)
-res4 = (output_array[:, 6]).reshape(dv_perc.shape)
+res4 = (output_array[:, 7]/100000).reshape(dv_perc.shape)
 
-sigma = 1.5
+sigma = 1
 res3 = gaussian_filter(res3, sigma)
-res4 = gaussian_filter(res4, sigma)
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 

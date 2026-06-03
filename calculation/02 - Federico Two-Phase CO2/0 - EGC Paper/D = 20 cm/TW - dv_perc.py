@@ -9,13 +9,11 @@ from scipy.interpolate import griddata
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
-n_setpoints = 4
+n_setpoints = 8
 dv_perc_list = np.linspace(-0.5, 0.3, n_setpoints)
-# rpm_list = np.linspace(5000, 20000, n_setpoints)
 TW_ref = 0.0015  # [m]
-TW_list = np.linspace(1, 1.5, n_setpoints) * TW_ref
+TW_list = np.linspace(0.8, 3, n_setpoints) * TW_ref
 dv_perc, TW = np.meshgrid(dv_perc_list, TW_list)
-# rpm, TW = np.meshgrid(rpm_list, TW_list)
 
 # Input Constraints Data
 P_in = 11900000  # [Pa]
@@ -36,7 +34,7 @@ Eta_arr = np.empty(len(dv_perc_list) * len(TW_list))
 Power_arr = np.empty(len(dv_perc_list) * len(TW_list))
 RPM_arr = np.empty(len(dv_perc_list) * len(TW_list))
 
-output_array = np.empty((len(range(n_setpoints)) * len(range(n_setpoints)), 12))
+output_array = np.empty((len(range(n_setpoints)) * len(range(n_setpoints)), 13))
 
 Eta_max_arr = np.empty(len(dv_perc_list))
 D_max_arr = np.empty(len(dv_perc_list))
@@ -69,7 +67,7 @@ for i in tqdm(range(n_setpoints)):
         # Main design Parameters
         curr_geometry.rotor.b_channel = 0.0001
         curr_geometry.rotor.d_ratio = 3  # [m]
-        curr_geometry.d_main = 0.10  # [m]
+        curr_geometry.d_main = 0.20  # [m]
 
         tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=TPStatorMil, rotor=TPRotor)
 
@@ -121,6 +119,7 @@ for i in tqdm(range(n_setpoints)):
             output_array[j + j_0, 9] = (tt.static_points[2].get_variable("h") - tt.static_points[3].get_variable("h")) / (tt.static_points[0].get_variable("h") - tt.static_points[3].get_variable("h"))
             output_array[j + j_0, 10] = tt.Eta_tesla_ss
             output_array[j + j_0, 11] = tt.points[2].get_variable("p")
+            output_array[j + j_0, 12] = tt.volume
 
         else:
             output_array[j + j_0, 0] = np.nan
@@ -135,6 +134,7 @@ for i in tqdm(range(n_setpoints)):
             output_array[j + j_0, 9] = np.nan
             output_array[j + j_0, 10] = np.nan
             output_array[j + j_0, 11] = np.nan
+            output_array[j + j_0, 12] = np.nan
 
     if tt.Eta_tesla_ss < 1 and tt.Eta_tesla_ss > 0:
 
@@ -155,28 +155,105 @@ RPM_res = RPM_arr.reshape(dv_perc.shape)
 # %%------------   PLOT RESULTS                            ----------------------------------------------------------> #
 
 res1 = (output_array[:, 1]).reshape(dv_perc.shape)
-res2 = output_array[:, 9].reshape(dv_perc.shape)
-res3 = ((output_array[:, 3] * output_array[:, 6]) / 1000).reshape(dv_perc.shape)
-res4 = ((output_array[:, 7] - output_array[:, 11]) / 100000).reshape(dv_perc.shape)
+res2 = output_array[:, 5].reshape(dv_perc.shape)
+res3 = ((output_array[:, 3] * output_array[:, 6]) / (output_array[:, 12] * 100000)).reshape(dv_perc.shape)
+res4 = (output_array[:, 7] / 1000000).reshape(dv_perc.shape)
 
-sigma = 1
+sigma = 2
+res3 = gaussian_filter(res3, sigma)
 res1 = gaussian_filter(res1, sigma)
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
 ETA = axs[0, 0].contourf(dv_perc, TW, res1, 15)
-MFR = axs[0, 1].contourf(dv_perc, TW, res2, 8)
-SPEC_POWER = axs[1, 0].contourf(dv_perc, TW, res3, 10)
-PRESSURE = axs[1, 1].contourf(dv_perc, TW, res4, 8)
+MFR = axs[0, 1].contourf(dv_perc, TW, res2, 10)
+SPEC_POWER = axs[1, 0].contourf(dv_perc, TW, res3, 15)
+N_PACKS = axs[1, 1].contourf(dv_perc, TW, res4, 10)
 
-axs[0, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Efficiency / Reference Case Efficiency [-]')
-axs[0, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Degree of Reaction [-]')
-axs[1, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Power per Channel [W]')
-axs[1, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Stator-Rotor Gap Pressure Drop [bar]')
+axs[0, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Efficiency [-]')
+axs[0, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Mass Flow Rate per Channel [kg]')
+axs[1, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Specific Power [kW]')
+axs[1, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]',
+              title='Stator Outlet Static Pressure [MPa]')
 
 CB1 = fig.colorbar(ETA, shrink=0.8, ax=axs[0, 0], aspect=30)
 CB2 = fig.colorbar(MFR, shrink=0.8, ax=axs[0, 1], aspect=30)
 CB3 = fig.colorbar(SPEC_POWER, shrink=0.8, ax=axs[1, 0], aspect=30)
-CB4 = fig.colorbar(PRESSURE, shrink=0.8, ax=axs[1, 1], aspect=30)
+CB4 = fig.colorbar(N_PACKS, shrink=0.8, ax=axs[1, 1], aspect=30)
 
+plt.savefig('grafico.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+# %%------------   PLOT RESULTS                            ----------------------------------------------------------> #
+method = 'cubic'
+
+# Flatten delle coordinate della griglia originale
+x = dv_perc.flatten()
+y = TW.flatten()
+
+# Griglia fitta (ad es. 100x100)
+xi = np.linspace(x.min(), x.max(), 100)
+yi = np.linspace(y.min(), y.max(), 100)
+xi, yi = np.meshgrid(xi, yi)
+
+# Interpola ogni risultato (es. res1, res2, etc.)
+res1_interp = griddata((x, y), res1.flatten(), (xi, yi), method=method)
+res2_interp = griddata((x, y), res2.flatten(), (xi, yi), method=method)
+res3_interp = griddata((x, y), res3.flatten(), (xi, yi), method=method)
+res4_interp = griddata((x, y), res4.flatten(), (xi, yi), method=method)
+
+# Ridisegna i grafici con i dati interpolati
+fig, axs = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+
+ETA = axs[0, 0].contourf(xi, yi, res1_interp, 15, cmap='viridis')
+MFR = axs[0, 1].contourf(xi, yi, res2_interp, 10, cmap='viridis')
+SPEC_POWER = axs[1, 0].contourf(xi, yi, res3_interp, 15, cmap='viridis')
+N_PACKS = axs[1, 1].contourf(xi, yi, res4_interp, 10, cmap='viridis')
+
+font_axis = 14
+font_title = 16
+
+axs[0, 0].set_xlabel('Tip Speed Velocity Ratio [-]', fontsize=font_axis)
+axs[0, 0].set_ylabel('Throat Width [m]', fontsize=font_axis)
+axs[0, 0].set_title('Efficiency [-]', fontsize=font_title)
+
+axs[0, 1].set_xlabel('Tip Speed Velocity Ratio [-]', fontsize=font_axis)
+axs[0, 1].set_ylabel('Throat Width [m]', fontsize=font_axis)
+axs[0, 1].set_title('Mass Flow Rate per Channel [kg]', fontsize=font_title)
+
+axs[1, 0].set_xlabel('Tip Speed Velocity Ratio [-]', fontsize=font_axis)
+axs[1, 0].set_ylabel('Throat Width [m]', fontsize=font_axis)
+axs[1, 0].set_title('Specific Power [kW/m3]', fontsize=font_title)
+
+axs[1, 1].set_xlabel('Tip Speed Velocity Ratio [-]', fontsize=font_axis)
+axs[1, 1].set_ylabel('Throat Width [m]', fontsize=font_axis)
+axs[1, 1].set_title('Stator Outlet Static Pressure [MPa]', fontsize=font_title)
+
+CB1 = fig.colorbar(ETA, shrink=0.8, ax=axs[0, 0], aspect=30)
+CB2 = fig.colorbar(MFR, shrink=0.8, ax=axs[0, 1], aspect=30)
+CB3 = fig.colorbar(SPEC_POWER, shrink=0.8, ax=axs[1, 0], aspect=30)
+CB4 = fig.colorbar(N_PACKS, shrink=0.8, ax=axs[1, 1], aspect=30)
+
+plt.style.use("seaborn-v0_8-whitegrid")
+
+plt.show()
+
+# %%------------   PARETO FRONT                            ----------------------------------------------------------> #
+
+fig, ax = plt.subplots()
+
+res5 = output_array[:, 1]
+res6 = (output_array[:, 3] * output_array[:, 6] / (output_array[:, 0] * 1000))
+
+scatter = ax.scatter(res5, res6, c=dv_perc, cmap='viridis')
+
+CB = fig.colorbar(scatter, shrink=1, ax=ax, aspect=30, label='dv_perc [-]')
+CB.minorticks_on()
+
+ax.set_xlim([0.5, None])
+ax.set_ylim([0, None])
+ax.set_xlabel('Efficiency [-]', fontsize=10)
+ax.set_ylabel('Specific Power [kW / m3]', fontsize=10)
+
+plt.grid()
 plt.show()

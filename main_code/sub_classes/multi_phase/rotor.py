@@ -1,11 +1,13 @@
 import numpy as np
-from main_code.base_classes.base_rotor import BaseRotor, BaseRotorStep, Speed
+from main_code.base_classes.base_rotor import BaseRotor, Speed
 from .handlers.flow_pressure_losses_handler import flow_losses_handler
 from .handlers.void_fraction_handler import void_fraction_handler
+from ..single_phase.rotor import SPRotorStep
+
 
 @flow_losses_handler
 @void_fraction_handler
-class TPRotorStep(BaseRotorStep):
+class TPRotorStep(SPRotorStep):
 
     def __init__(self, main_rotor, speed: Speed):
 
@@ -27,28 +29,39 @@ class TPRotorStep(BaseRotorStep):
 
     def get_variations(self, dr):
 
-        self.tp_evaluate_condition()
-        self.evaluate_liq_pressure_losses()
+        if 0 < self.thermo_point.get_variable("x") < 1:
 
-        rho = self.thermo_point.get_variable("rho")
-        r_new = self.new_pos.r
-        vt = self.speed.vt
-        vr = self.speed.vr
-        beta = self.speed.beta
+            self.options.sp_check = False
 
-        vr_new = self.m_dot /(2 * np.pi * self.geometry.b_channel * r_new * rho)
+            self.tp_evaluate_condition()
+            self.evaluate_liq_pressure_losses()
 
-        #
-        # vtFG = vt - dr * (vt / r_new - self.phi_liq * self.dpdl_liq / (rho * vr_new) * np.sin(self.speed.beta))
-        # vt_c = (vt + vtFG) / 2
-        #
+            rho = self.thermo_point.get_variable("rho")
+            r_new = self.new_pos.r
+            vt = self.speed.vt
+            vr = self.speed.vr
+            beta = self.speed.beta
 
-        dvr = vr_new - self.speed.vr
-        dvt = dr * (self.speed.vt / r_new - self.phi_liq * self.dpdl_liq / (rho * vr_new) * np.sin(self.speed.beta))
-        dP = - dr * ((rho * (vr ** 2 + vt ** 2) / r_new) - (self.phi_liq * self.dpdl_liq *
-                np.cos(self.speed.beta)))
+            vr_new = self.m_dot /(2 * np.pi * self.geometry.b_channel * r_new * rho)
 
-        return dvr, dvt, dP, 0.
+            #
+            # vtFG = vt - dr * (vt / r_new - self.phi_liq * self.dpdl_liq / (rho * vr_new) * np.sin(self.speed.beta))
+            # vt_c = (vt + vtFG) / 2
+            #
+
+            dvr = vr_new - self.speed.vr
+            dvt = dr * (self.speed.vt / r_new - self.phi_liq * self.dpdl_liq / (rho * vr_new) * np.sin(self.speed.beta))
+            dP = - dr * ((rho * (vr ** 2 + vt ** 2) / r_new) - (self.phi_liq * self.dpdl_liq *
+                    np.cos(self.speed.beta)))
+
+            return dvr, dvt, dP, 0.
+
+        else:
+
+            self.options.sp_check = True
+
+            return super().get_variations(dr)
+
 
     def tp_evaluate_condition(self):
 
@@ -140,6 +153,9 @@ class TPRotor(BaseRotor):
         self.liq_phase = self.main_turbine.points[1].duplicate()
         self.vap_phase = self.main_turbine.points[1].duplicate()
 
+        self.isentropic_inlet = self.main_turbine.stator.isentropic_output
+        self.intermediate_gap_point = self.main_turbine.points[0].duplicate()
+
     def evaluate_gap_losses(self):
 
         """ The pressure losses in the stator-gap enlargement and in the gap-rotor contraction are considered to be
@@ -151,110 +167,190 @@ class TPRotor(BaseRotor):
 
         """
 
-        self.liq_phase.set_variable("P", self.main_turbine.static_points[1].get_variable("P"))
-        self.vap_phase.set_variable("P", self.main_turbine.static_points[1].get_variable("P"))
-
-        self.liq_phase.set_variable("x", 0)
-        self.vap_phase.set_variable("x", 1)
-
-        x = self.main_turbine.static_points[1].get_variable("x")
-        # epsilon = 1 / (1 + (1 - x) / x * (self.vap_phase.get_variable("rho") / self.liq_phase.get_variable("rho")) ** (2 / 3))
-
-        __tmp_point = list()
-
-        for i in range(3):
-            __tmp_point.append(self.main_turbine.points[0].duplicate())
-
-        __tmp_point_liq1 = self.main_turbine.points[0].duplicate()
-        __tmp_point_vap1 = self.main_turbine.points[0].duplicate()
-        __tmp_point_liq2 = self.main_turbine.points[0].duplicate()
-        __tmp_point_vap2 = self.main_turbine.points[0].duplicate()
+        # self.liq_phase.set_variable("P", self.main_turbine.static_points[1].get_variable("P"))
+        # self.vap_phase.set_variable("P", self.main_turbine.static_points[1].get_variable("P"))
+        #
+        # self.liq_phase.set_variable("x", 0)
+        # self.vap_phase.set_variable("x", 1)
+        #
+        # x = self.main_turbine.static_points[1].get_variable("x")
+        # # epsilon = 1 / (1 + (1 - x) / x * (self.vap_phase.get_variable("rho") / self.liq_phase.get_variable("rho")) ** (2 / 3))
+        #
+        # __tmp_point = list()
+        #
+        # for i in range(3):
+        #     __tmp_point.append(self.main_turbine.points[0].duplicate())
+        #
+        # __tmp_point_liq1 = self.main_turbine.points[0].duplicate()
+        # __tmp_point_vap1 = self.main_turbine.points[0].duplicate()
+        # __tmp_point_liq2 = self.main_turbine.points[0].duplicate()
+        # __tmp_point_vap2 = self.main_turbine.points[0].duplicate()
+        #
+        # if self.gap_losses_control:
+        #
+        #     A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
+        #     A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(
+        #         np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
+        #     A_ratio1 = A_in_sb / A_out_sb
+        #
+        #     ke = (1 - A_in_sb / A_out_sb) ** 2
+        #     rho1 = self.main_turbine.static_points[1].get_variable("rho")
+        #     v_1s = self.main_turbine.stator.speed_out.v
+        #     DP_sbocco = 0.5 * ke * rho1 * v_1s ** 2
+        #
+        #     P_0 = self.main_turbine.points[1].get_variable("p") - DP_sbocco
+        #     h_0 = self.main_turbine.points[1].get_variable("h")
+        #
+        #     __tmp_point[1].set_variable("P", P_0)
+        #     __tmp_point[1].set_variable("h", h_0)
+        #
+        #     self.intermediate_point = __tmp_point[1].get_static_point(self.main_turbine.stator.speed_out.v)
+        #
+        #     # Evaluation of Contraction Pressure Losses
+        #     A_in_imb = 2 * np.pi * self.geometry.r_out * (self.main_turbine.geometry.disc_thickness + self.geometry.b_channel)
+        #     A_out_imb = 2 * np.pi * self.geometry.r_out * self.geometry.b_channel
+        #     A_ratio2 = A_out_imb / A_in_imb
+        #     Cc = 1 - (1 - A_ratio2) / (2.08 * (1 - A_ratio2) + 0.5371)
+        #
+        #     x_2 = self.intermediate_point.get_variable("x")
+        #
+        #     n_it = 10
+        #
+        #     self.main_turbine.points[2].set_variable("h", self.main_turbine.points[1].get_variable("h"))
+        #
+        #     for n in range(n_it):
+        #
+        #         __tmp_point[2] = self.intermediate_point.duplicate()
+        #
+        #         __tmp_point[2].set_variable("h", self.intermediate_point.get_variable("h"))
+        #         __tmp_point[2].set_variable("x", x_2)
+        #
+        #         P_g_2 = __tmp_point[2].get_variable("P")
+        #
+        #         __tmp_point_liq2.set_variable("P", P_g_2)
+        #         __tmp_point_vap2.set_variable("P", P_g_2)
+        #         __tmp_point_vap2.set_variable("x", 1)
+        #         __tmp_point_liq2.set_variable("x", 0)
+        #         rho_l2 = __tmp_point_liq2.get_variable("rho")
+        #         rho_v2 = __tmp_point_vap2.get_variable("rho")
+        #
+        #         epsilon_star2 = 1 / (1 + (1 - x_2) / x_2 * (rho_v2 / rho_l2) ** (2 / 3))
+        #
+        #         rho_first_guess2 = ((1 - x_2 ** 2) / (rho_l2 * (1 - epsilon_star2)) + x_2 ** 2 / (
+        #                     rho_v2 * epsilon_star2)) ** (-1)
+        #         rho_h_star2 = (x_2 / rho_v2 + (1 - x_2) / rho_l2) ** (-1)
+        #         rho_sec_guess2 = ((1 - x_2) ** 3 / (rho_l2 * (1 - epsilon_star2)) ** 2 + x_2 ** 3 / (
+        #                     rho_v2 * epsilon_star2) ** 2) ** (-1 / 2)
+        #         G_con = self.m_dot_ch / A_out_imb
+        #         DeltaP_con = G_con ** 2 * (rho_h_star2 / 2 * ((1 / (Cc * rho_sec_guess2) ** 2) - (A_ratio2 /
+        #                                                         rho_sec_guess2) ** 2) + (1 - Cc) / rho_first_guess2) # RIVEDERE
+        #
+        #         self.main_turbine.points[2].set_variable("P", P_0 - DeltaP_con)
+        #         self.main_turbine.points[2].set_variable("h", self.main_turbine.points[1].get_variable("h"))
+        #
+        #         self.main_turbine.static_points[2] = self.main_turbine.points[2].get_static_point(self.main_turbine.stator.speed_out.v)
+        #
+        #         x2 = self.main_turbine.static_points[2].get_variable("x")
+        #
+        #         if np.abs(x2 - x_2) < 0.001:
+        #             break
+        #         else:
+        #             x_2 = x2
+        #
+        #     vr_R = self.m_dot_ch / (2 * np.pi * self.geometry.b_channel * (self.geometry.r_out) * __tmp_point[1].get_variable("rho"))
+        #     v_R = self.main_turbine.stator.speed_out.v
+        #     self.rotor_inlet_speed.init_from_codes("v", v_R, "v_r", vr_R)
+        #
+        #     return self.rotor_inlet_speed
+        #
+        # else:
+        #
+        #     self.main_turbine.points[1].copy_state_to(self.main_turbine.points[2])
+        #     # self.main_turbine.static_points[1].copy_state_to(self.main_turbine.static_points[2])
+        #     self.main_turbine.static_points[2].set_variable("x", self.main_turbine.static_points[1].get_variable("x"))
+        #     self.main_turbine.static_points[2].set_variable("p", self.main_turbine.static_points[1].get_variable("p"))
+        #     self.rotor_inlet_speed = self.main_turbine.stator.speed_out
 
         if self.gap_losses_control:
 
+            # Evaluating Outlet Stator Pressure Loss
             A_in_sb = self.main_turbine.geometry.throat_width * self.main_turbine.geometry.H_s
-            A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(
-                np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
-            A_ratio1 = A_in_sb / A_out_sb
+            # A_out_sb = ((self.main_turbine.geometry.throat_width / np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) + self.geometry.gap / np.sin(
+            #     np.radians(90 - self.main_turbine.geometry.alpha1))) / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1)) -
+            #         self.geometry.gap * np.tan(np.radians(90 - self.main_turbine.geometry.alpha1)) - self.geometry.gap / np.tan(
+            #         np.radians(90 - self.geometry.alpha_1PS))) * self.main_turbine.geometry.H_s
+            A_out_sb = (self.main_turbine.geometry.throat_width + self.geometry.gap / np.cos(np.radians(90 - self.main_turbine.geometry.alpha1))) * self.main_turbine.geometry.H_s
+            self.A_ratio = A_in_sb / A_out_sb
+
+            ''' Borda-Carnot Loss Coefficient --- Basic Hypothesis
+            - incompressible flow (or, at least, very low Mach number)
+            - subsonic flow
+            '''
 
             ke = (1 - A_in_sb / A_out_sb) ** 2
+
+            ''' Nouri-Burujerdi Loss Coefficient --- Basic Hypothesis
+            - compressible flow
+            - Mach number < 0.6
+            '''
+
+            # M = 0.6
+            # ke = 1.06 * (1 - A_in_sb / A_out_sb) ** 1.9 * np.exp((3 * M ** 2.87) / ((1 - A_in_sb / A_out_sb) ** 0.757))
+
+            dh = self.main_turbine.points[0].get_variable("h") - self.isentropic_inlet.get_variable("h")
             rho1 = self.main_turbine.static_points[1].get_variable("rho")
-            v_1s = self.main_turbine.stator.speed_out.v
+            v_1ss = np.sqrt(2 * dh)
+            v_1s = self.main_turbine.stator.phi_n * v_1ss
             DP_sbocco = 0.5 * ke * rho1 * v_1s ** 2
 
-            P_0 = self.main_turbine.points[1].get_variable("p") - DP_sbocco
-            h_0 = self.main_turbine.points[1].get_variable("h")
+            # Evaluating Thermodynamic Conditions After Stator Loss
+            P_01_R_star = self.main_turbine.points[1].get_variable("P") - DP_sbocco
+            h_01_R_star = self.main_turbine.points[1].get_variable("h")               # Total Enthalpy Conservation
+            h_1_R_star = h_01_R_star - 0.5 * v_1s ** 2         # The Loss is Considered Iso-Enthalpic
 
-            __tmp_point[1].set_variable("P", P_0)
-            __tmp_point[1].set_variable("h", h_0)
+            self.intermediate_gap_point.set_variable("h", h_01_R_star)
+            self.intermediate_gap_point.set_variable("P", P_01_R_star)
+            rho_1_R_star = self.intermediate_gap_point.get_variable("rho")
 
-            self.intermediate_point = __tmp_point[1].get_static_point(self.main_turbine.stator.speed_out.v)
+            # Evaluating Speed after Stator Loss
+            # vr_1_R_star = (self.main_turbine.stator.m_dot_s / self.geometry.n_channels) / (
+            #     2 * np.pi * self.geometry.b_channel * ((self.geometry.d_out + 2 * self.geometry.gap) / 2) * rho_1_R_star)
+            vr_1_R_star = (self.main_turbine.stator.m_dot_s / self.main_turbine.n_packs) / (
+                2 * np.pi * self.geometry.b_channel * ((self.geometry.d_out + 2 * self.geometry.gap) / 2) * rho_1_R_star)
+            wr_1_R_star = vr_1_R_star
 
-            # Evaluation of Contraction Pressure Losses
-            A_in_imb = 2 * np.pi * self.geometry.r_out * (self.main_turbine.geometry.disc_thickness + self.geometry.b_channel)
-            A_out_imb = 2 * np.pi * self.geometry.r_out * self.geometry.b_channel
-            A_ratio2 = A_out_imb / A_in_imb
-            Cc = 1 - (1 - A_ratio2) / (2.08 * (1 - A_ratio2) + 0.5371)
+            # Evaluating Inlet Rotor Pressure Loss
+            A_in_im = 2 * np.pi * (self.geometry.d_out / 2) * self.main_turbine.geometry.H_s
+            A_out_im = self.geometry.n_discs * 2 * np.pi * (self.geometry.d_out / 2) * self.geometry.b_channel
+            A2onA1 = (A_out_im / A_in_im)
+            kc_1 = -0.12 * A2onA1 ** 4 + 1.02 * A2onA1 ** 3 - 1.28 * A2onA1 ** 2 - 0.12 * A2onA1 + 0.5
+            DP_imbocco = 0.5 * kc_1 * rho_1_R_star * wr_1_R_star ** 2
 
-            x_2 = self.intermediate_point.get_variable("x")
+            # Evaluating Thermodynamic Conditions After Rotor Loss
+            P_01_R = P_01_R_star - DP_imbocco
+            h_01_R = h_01_R_star
+            h_1_R = h_01_R - 0.5 * v_1s ** 2
 
-            n_it = 10
+            self.main_turbine.points[2].set_variable("P", P_01_R)
+            self.main_turbine.points[2].set_variable("h", h_01_R)
 
-            self.main_turbine.points[2].set_variable("h", self.main_turbine.points[1].get_variable("h"))
+            self.main_turbine.static_points[2].set_variable("P", P_01_R - 0.5 * rho_1_R_star * v_1s ** 2)
+            self.main_turbine.static_points[2].set_variable("h", h_1_R)
 
-            for n in range(n_it):
-
-                __tmp_point[2] = self.intermediate_point.duplicate()
-
-                __tmp_point[2].set_variable("x", x_2)
-                __tmp_point[2].set_variable("h", self.intermediate_point.get_variable("h"))
-
-                P_g_2 = __tmp_point[2].get_variable("P")
-
-                __tmp_point_liq2.set_variable("P", P_g_2)
-                __tmp_point_vap2.set_variable("P", P_g_2)
-                __tmp_point_vap2.set_variable("x", 1)
-                __tmp_point_liq2.set_variable("x", 0)
-                rho_l2 = __tmp_point_liq2.get_variable("rho")
-                rho_v2 = __tmp_point_vap2.get_variable("rho")
-
-                epsilon_star2 = 1 / (1 + (1 - x_2) / x_2 * (rho_v2 / rho_l2) ** (2 / 3))
-
-                rho_first_guess2 = ((1 - x_2 ** 2) / (rho_l2 * (1 - epsilon_star2)) + x_2 ** 2 / (
-                            rho_v2 * epsilon_star2)) ** (-1)
-                rho_h_star2 = (x_2 / rho_v2 + (1 - x_2) / rho_l2) ** (-1)
-                rho_sec_guess2 = ((1 - x_2) ** 3 / (rho_l2 * (1 - epsilon_star2)) ** 2 + x_2 ** 3 / (
-                            rho_v2 * epsilon_star2) ** 2) ** (-1 / 2)
-                G_con = self.m_dot_ch / A_out_imb
-                DeltaP_con = G_con ** 2 * (rho_h_star2 / 2 * ((1 / (Cc * rho_sec_guess2) ** 2) - (A_ratio2 /
-                                                                rho_sec_guess2) ** 2) + (1 - Cc) / rho_first_guess2) # RIVEDERE
-
-                self.main_turbine.points[2].set_variable("P", P_0 - DeltaP_con)
-                self.main_turbine.points[2].set_variable("h", self.main_turbine.points[1].get_variable("h"))
-
-                self.main_turbine.static_points[2] = self.main_turbine.points[2].get_static_point(self.main_turbine.stator.speed_out.v)
-
-                x2 = self.main_turbine.static_points[2].get_variable("x")
-
-                if np.abs(x2 - x_2) < 0.000001:
-                    break
-                else:
-                    x_2 = x2
-
-            vr_R = self.m_dot_ch / (2 * np.pi * self.geometry.b_channel * (self.geometry.r_out) * __tmp_point[1].get_variable("rho"))
-            v_R = self.main_turbine.stator.speed_out.v
-            self.rotor_inlet_speed.init_from_codes("v", v_R, "v_r", vr_R)
+            # Evaluating Speed after Rotor Loss
+            # vr_1_R = (self.main_turbine.stator.m_dot_s / self.geometry.n_channels) / (2 * np.pi * self.geometry.b_channel * (
+            #     self.geometry.d_out / 2) * rho_1_R_star)
+            vr_1_R = (self.main_turbine.stator.m_dot_s) / (2 * np.pi * self.geometry.b_channel * (
+                self.geometry.d_out / 2) * rho_1_R_star)
+            v_1_R = np.sqrt(2 * (h_01_R - h_1_R))
+            self.rotor_inlet_speed.init_from_codes("v", v_1_R, "v_r", vr_1_R)
 
             return self.rotor_inlet_speed
 
         else:
-
             self.main_turbine.points[1].copy_state_to(self.main_turbine.points[2])
-            # self.main_turbine.static_points[1].copy_state_to(self.main_turbine.static_points[2])
-            self.main_turbine.static_points[2].set_variable("x", self.main_turbine.static_points[1].get_variable("x"))
-            self.main_turbine.static_points[2].set_variable("p", self.main_turbine.static_points[1].get_variable("p"))
+            self.main_turbine.static_points[1].copy_state_to(self.main_turbine.static_points[2])
             self.rotor_inlet_speed = self.main_turbine.stator.speed_out
-
 
     def evaluate_gap_losses_old(self):
 

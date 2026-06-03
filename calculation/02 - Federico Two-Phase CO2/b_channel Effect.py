@@ -5,16 +5,18 @@ import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
-from scipy.interpolate import griddata
 
 # %%------------   MAIN INPUT DATA                         ----------------------------------------------------------> #
 
 n_setpoints = 4
-dv_perc_list = np.linspace(-0.5, 0.3, n_setpoints)
-# rpm_list = np.linspace(5000, 20000, n_setpoints)
+
 TW_ref = 0.0015  # [m]
 TW_list = np.linspace(1, 1.5, n_setpoints) * TW_ref
-dv_perc, TW = np.meshgrid(dv_perc_list, TW_list)
+
+b_channel_ref = 0.0001  # [m]
+b_channel_list = np.linspace(0.5, 1.5, n_setpoints) * b_channel_ref
+
+TW, b = np.meshgrid(TW_list, b_channel_list)
 # rpm, TW = np.meshgrid(rpm_list, TW_list)
 
 # Input Constraints Data
@@ -29,18 +31,18 @@ output_array_list = list()
 rotor_array_max_efficiency_list = list()
 rotor_array_max_power_list = list()
 
-Eta = np.empty(len(dv_perc_list) * len(TW_list))
-Power = np.empty(len(dv_perc_list) * len(TW_list))
+Eta = np.empty(len(TW_list) * len(b_channel_list))
+Power = np.empty(len(TW_list) * len(b_channel_list))
 
-Eta_arr = np.empty(len(dv_perc_list) * len(TW_list))
-Power_arr = np.empty(len(dv_perc_list) * len(TW_list))
-RPM_arr = np.empty(len(dv_perc_list) * len(TW_list))
+Eta_arr = np.empty(len(TW_list) * len(b_channel_list))
+Power_arr = np.empty(len(TW_list) * len(b_channel_list))
+RPM_arr = np.empty(len(TW_list) * len(b_channel_list))
 
 output_array = np.empty((len(range(n_setpoints)) * len(range(n_setpoints)), 12))
 
-Eta_max_arr = np.empty(len(dv_perc_list))
-D_max_arr = np.empty(len(dv_perc_list))
-b_max_arr = np.empty(len(dv_perc_list))
+Eta_max_arr = np.empty(len(TW_list))
+D_max_arr = np.empty(len(TW_list))
+b_max_arr = np.empty(len(TW_list))
 
 # %%------------   CALCULATION                             ----------------------------------------------------------> #
 
@@ -67,14 +69,14 @@ for i in tqdm(range(n_setpoints)):
         curr_options.rotor.n_rotor = 4000
 
         # Main design Parameters
-        curr_geometry.rotor.b_channel = 0.0001
+        curr_geometry.rotor.b_channel = b[i,j]
         curr_geometry.rotor.d_ratio = 3  # [m]
         curr_geometry.d_main = 0.10  # [m]
 
         tt = BaseTeslaTurbine("CarbonDioxide", curr_geometry, curr_options, stator=TPStatorMil, rotor=TPRotor)
 
         tt.rotor.gap_losses_control = True
-        tt.rotor.dv_perc = dv_perc[i,j]
+        tt.rotor.dv_perc = -0.25
 
         Z_stat = 3
         tt.geometry.stator.Z_stat = Z_stat
@@ -148,26 +150,26 @@ for i in tqdm(range(n_setpoints)):
         Power_arr[i * n_setpoints + j] = np.nan
         RPM_arr[i * n_setpoints + j] = np.nan
 
-Eta_res = Eta_arr.reshape(dv_perc.shape)
-Power_res = Power_arr.reshape(dv_perc.shape)
-RPM_res = RPM_arr.reshape(dv_perc.shape)
+Eta_res = Eta_arr.reshape(TW.shape)
+Power_res = Power_arr.reshape(TW.shape)
+RPM_res = RPM_arr.reshape(TW.shape)
 
 # %%------------   PLOT RESULTS                            ----------------------------------------------------------> #
 
-res1 = (output_array[:, 1]).reshape(dv_perc.shape)
-res2 = output_array[:, 9].reshape(dv_perc.shape)
-res3 = ((output_array[:, 3] * output_array[:, 6]) / 1000).reshape(dv_perc.shape)
-res4 = ((output_array[:, 7] - output_array[:, 11]) / 100000).reshape(dv_perc.shape)
+res1 = output_array[:, 1].reshape(TW.shape)
+res2 = output_array[:, 9].reshape(TW.shape)
+res3 = ((output_array[:, 3] * output_array[:, 6]) / 1000).reshape(TW.shape)
+res4 = ((output_array[:, 7] - output_array[:, 11]) / 100000).reshape(TW.shape)
 
-sigma = 1
-res1 = gaussian_filter(res1, sigma)
+# sigma = 1
+# res1 = gaussian_filter(res1, sigma)
 
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
-ETA = axs[0, 0].contourf(dv_perc, TW, res1, 15)
-MFR = axs[0, 1].contourf(dv_perc, TW, res2, 8)
-SPEC_POWER = axs[1, 0].contourf(dv_perc, TW, res3, 10)
-PRESSURE = axs[1, 1].contourf(dv_perc, TW, res4, 8)
+ETA = axs[0, 0].contourf(TW, b, res1, 15)
+MFR = axs[0, 1].contourf(TW, b, res2, 8)
+SPEC_POWER = axs[1, 0].contourf(TW, b, res3, 10)
+PRESSURE = axs[1, 1].contourf(TW, b, res4, 8)
 
 axs[0, 0].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Efficiency / Reference Case Efficiency [-]')
 axs[0, 1].set(xlabel='Tip Speed Velocity Ratio [-]', ylabel='Throat Width [m]', title='Degree of Reaction [-]')

@@ -19,13 +19,13 @@ pr_error = [2.91, 3.00, 3.66, 3.40]
 
 # %%--------------------------------------   PLOT RESULTS   ---------------------------------------------------------> #
 
-fig, axs = plt.subplots(2, 2, constrained_layout=True, figsize=[8, 4])
+fig, axs = plt.subplots(2, 2, constrained_layout=True, figsize=[8, 5])
 
 def format_func(value, tick_number):
     return f"{value:.2g}"
 
 axs[0, 0].plot(disk_gap, CFD_vr_table, label='CFD Model', linestyle='', marker='D', mec='black', mfc='white')
-axs[0, 0].plot(disk_gap, PY_vr, label='Python Model', linestyle='', marker='^', mec='navy', mfc='navy')
+axs[0, 0].plot(disk_gap, PY_vr, label='This Work', linestyle='', marker='^', mec='navy', mfc='navy')
 axs[0, 0].set_xlabel('Disk Gap / Reference Disk Gap [-]')
 axs[0, 0].set_ylabel('Velocity Ratio [-]')
 axs[0, 0].set_xlim(0.4, 3.2)
@@ -43,7 +43,7 @@ axs[1, 0].grid(axis='y', zorder=0)
 axs[1, 0].yaxis.set_major_formatter(ticker.FuncFormatter(format_func))
 
 axs[0, 1].plot(disk_gap, CFD_pr, label='CFD Model', linestyle='', marker='D', mec='black', mfc='white')
-axs[0, 1].plot(disk_gap, PY_pr, label='Python Model', linestyle='', marker='^', mec='navy', mfc='navy')
+axs[0, 1].plot(disk_gap, PY_pr, label='This Work', linestyle='', marker='^', mec='navy', mfc='navy')
 axs[0, 1].set_xlabel('Disk Gap / Reference Disk Gap [-]')
 axs[0, 1].set_ylabel('Pressure Ratio [-]')
 axs[0, 1].set_xlim(0.4, 3.2)

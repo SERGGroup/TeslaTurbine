@@ -88,77 +88,83 @@ for i in tqdm(range(setpoints)):
 
 # %%------------   PLOT RESULTS                            ----------------------------------------------------------> #
 
-fig, axs = plt.subplots(1,2, figsize=(8.6, 4))
+fig, axs = plt.subplots(1,2, figsize=(8.6, 4), constrained_layout=True)
 
-line1, = axs[0].plot(output_array[:, 0], output_array[:, 3], label='Power per Channel', color='Darkblue', linewidth=1.3)
-axs[0].set_xlabel('Rotational Speed [rpm]')
-axs[0].set_ylabel('Power [W]')
+line1, = axs[0].plot(output_array[:, 0] / 1000, output_array[:, 3], label='Power per Channel', color='Darkblue', linewidth=1.3)
+axs[0].set_xlabel('Rotational Speed [krpm]', fontsize=14)
+axs[0].set_ylabel('Power [W]', fontsize=14, color="darkblue")
 
-x_start, x_end = 5000, 30000
+x_start, x_end = 5, 30
 y1_start, y1_end = 40, 160
 
 axs[0].set_xlim(x_start, x_end)
 axs[0].set_ylim(y1_start, y1_end)
+axs[0].tick_params(axis="x", labelsize=12)
+axs[0].tick_params(axis="y", labelsize=12, labelcolor="darkblue")
 
 rect1 = patches.Rectangle(
-    (x_start, y1_start), 10000, y1_end - y1_start, linewidth=1, edgecolor="black",
+    (x_start, y1_start), 10, y1_end - y1_start, linewidth=1, edgecolor="black",
     facecolor="orange", alpha=0.3
 )
 
 axs[0].add_patch(rect1)
 
 ax2 = axs[0].twinx()
-line2, = ax2.plot(output_array[:, 0], output_array[:, 7], ls='--', label='Tip Ratio', color='black', linewidth=1.3, zorder=1)
-ax2.set_ylabel('Tip Ratio [-]')
+line2, = ax2.plot(output_array[:, 0] / 1000, output_array[:, 7], ls='--', label='Tip Ratio', color='black', linewidth=1.3, zorder=1)
+ax2.set_ylabel('Tip Ratio [-]', fontsize=14)
 ax2.set_ylim(0, 6)
+ax2.tick_params(axis="y", labelsize=12)
 
 handles, labels = axs[0].get_legend_handles_labels()
 handles2, labels2 = ax2.get_legend_handles_labels()
 combined_handles = handles + handles2
 combined_labels = labels + labels2
-axs[0].legend(handles=combined_handles, labels=combined_labels, loc='upper right', edgecolor='black', facecolor='white')
+axs[0].legend(handles=combined_handles, labels=combined_labels, loc='upper right', edgecolor='black', facecolor='white', fontsize=12)
 axs[0].grid()
-axs[0].set_title('a)', fontsize=10)
+axs[0].set_title('a)', fontsize=14)
 
-axs[0].annotate('Generator Operating Area', xy = (5000, 0.8), fontsize = 9, xytext = (16000, 0.2), bbox = dict(fc = 'white', boxstyle="round,pad=0.3", ec = 'black'), arrowprops = dict(fc = 'black', width = 0.05, headwidth = 4, headlength = 4), zorder = 1)
+# axs[0].annotate('Generator Operating Area', xy = (7, 0.8), fontsize = 12, xytext = (7, 0.2), bbox = dict(fc = 'white', boxstyle="round,pad=0.3", ec = 'black'), arrowprops = dict(fc = 'black', width = 0.05, headwidth = 4, headlength = 4), zorder = 1)
 
-line3, = axs[1].plot(output_array[:, 0], output_array[:, 11], label='Efficiency', color='Darkred', linewidth=1.3)
-axs[1].set_xlabel('Rotational Speed [rpm]')
-axs[1].set_ylabel('Total-to-Static Efficiency [-]')
+line3, = axs[1].plot(output_array[:, 0] / 1000, output_array[:, 11], label='Efficiency', color='Darkred', linewidth=1.3)
+axs[1].set_xlabel('Rotational Speed [krpm]', fontsize=14)
+axs[1].set_ylabel('Total-to-Static Efficiency [-]', fontsize=14, color="darkred")
 
 y2_start, y2_end = 0.2, 0.8
 
 axs[1].set_ylim(y2_start, y2_end)
-axs[1].set_xlim(5000, 30000)
+axs[1].set_xlim(5, 30)
+axs[1].tick_params(axis="x", labelsize=12)
+axs[1].tick_params(axis="y", labelsize=12, labelcolor="darkred")
 
 rect2 = patches.Rectangle(
-    (x_start, y2_start), 10000, y2_end - y2_start, linewidth=1, edgecolor="orange",
+    (x_start, y2_start), 10, y2_end - y2_start, linewidth=1, edgecolor="orange",
     facecolor="orange", alpha=0.3
 )
 
 axs[1].add_patch(rect2)
 
 ax1 = axs[1].twinx()
-line4, = ax1.plot(output_array[:, 0], output_array[:, 7], ls='--', label='Tip Ratio', color='Black', linewidth=1.3)
-ax1.set_ylabel('Tip Ratio [-]')
+line4, = ax1.plot(output_array[:, 0] / 1000, output_array[:, 7], ls='--', label='Tip Ratio', color='Black', linewidth=1.3)
+ax1.set_ylabel('Tip Ratio [-]', fontsize=14)
 ax1.set_ylim(0,6)
+ax1.tick_params(axis="y", labelsize=12)
 
 handles1, labels1 = axs[1].get_legend_handles_labels()
 handles3, labels3 = ax1.get_legend_handles_labels()
 combined_handles1 = handles1 + handles3
 combined_labels1 = labels1 + labels3
-axs[1].legend(handles=combined_handles1, labels=combined_labels1, loc='upper right', edgecolor='black', facecolor='white')
-axs[1].annotate('Generator Operating Area', xy = (12000, 0.28), fontsize = 9, xytext = (16000, 0.22),
-             bbox = dict(fc = 'white', boxstyle="round,pad=0.3", ec = 'black'),
-             arrowprops = dict(fc = 'black', width = 0.05, headwidth = 4, headlength = 4)
-             )
+axs[1].legend(handles=combined_handles1, labels=combined_labels1, loc='upper right', edgecolor='black', facecolor='white', fontsize=12)
+# axs[1].annotate('Generator Operating Area', xy = (12, 0.35), fontsize = 12, xytext = (9, 0.26),
+#            bbox = dict(fc = 'white', boxstyle="round,pad=0.3", ec = 'black'),
+#            arrowprops = dict(fc = 'black', width = 0.05, headwidth = 4, headlength = 4)
+#             )
 axs[1].grid()
-axs[1].set_title('b)', fontsize=10)
+axs[1].set_title('b)', fontsize=14)
 
-plt.tight_layout()
-axs[0].annotate('Generator Operating Area', xy = (12000, 56), fontsize = 9, xytext = (16000, 44),
-             bbox = dict(fc = 'white', boxstyle="round,pad=0.3", ec = 'black'),
-             arrowprops = dict(fc = 'black', width = 0.05, headwidth = 4, headlength = 4)
-             )
+# plt.tight_layout()
+# axs[0].annotate('Generator Operating Area', xy = (12, 75), fontsize = 12, xytext = (9, 50),
+#             bbox = dict(fc = 'white', boxstyle="round,pad=0.3", ec = 'black'),
+#            arrowprops = dict(fc = 'black', width = 0.05, headwidth = 4, headlength = 4), zorder = 100
+#            )
 plt.show()
 

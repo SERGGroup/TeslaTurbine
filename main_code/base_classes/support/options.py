@@ -5,6 +5,8 @@ class RotorOptions:
     integr_method = "Std"
     integr_variable = 0.001
     sp_check = False
+    heat_exchange = False
+    tank_temp = 0.
 
 
 class StatorOptions:
